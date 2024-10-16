@@ -11,5 +11,4 @@ __all__: list[str] = [
     "round_to_string",
     "get_significance_star",
     "pp",
-    "singleton",
 ]
