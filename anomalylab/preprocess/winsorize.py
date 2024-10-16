@@ -16,7 +16,7 @@ class WinsorizeMethod:
             data=np.where(
                 series.isnull(),
                 np.nan,
-                winsorization(a=np.ma.masked_invalid(a=series), limits=limits),
+                winsorization(np.ma.masked_invalid(series), limits=limits),
             ),
             index=series.index,
         )
@@ -86,25 +86,20 @@ class Winsorize(Preprocessor):
 
 if __name__ == "__main__":
     from anomalylab.datasets import DataSet
-    from anomalylab.preprocess.fillna import FillNa
-    from anomalylab.preprocess.normalize import Normalize
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
-    fill_nan: FillNa = FillNa(panel_data=panel)
-    fill_nan.fill_group_column(
-        group_column="industry",
-        value="Other",
-    )
-    norm: Normalize = Normalize(panel_data=panel)
+    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
 
     winsorize = Winsorize(panel_data=panel)
     winsorize.winsorize(
-        # columns="size",
+        # columns="MktCap",
         method="winsorize",
         limits=(0.01, 0.01),
-        group_columns=["time"],
-        # no_process_columns=["size"],
+        group_columns="time",
+        # no_process_columns=["MktCap"],
     )
-    pp(winsorize.panel_data)
+
+    panel = winsorize.panel_data
+    pp(panel)
+    pp(panel.df.head())

@@ -86,29 +86,14 @@ class Summary(Empirical):
 
 if __name__ == "__main__":
     from anomalylab.datasets import DataSet
-    from anomalylab.preprocess.fillna import FillNa
-    from anomalylab.preprocess.normalize import Normalize
 
     df: DataFrame = DataSet.get_panel_data()
 
     panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
-    fill_nan: FillNa = FillNa(panel_data=panel)
-    fill_nan.fill_group_column(
-        group_column="industry",
-        value="Other",
-    )
-    fill_nan.fillna(
-        method="mean",
-        group_columns="time",
-    )
-    normalize: Normalize = Normalize(panel_data=panel)
-    normalize.normalize(
-        group_columns="time",
-    )
     summary = Summary(panel_data=panel)
     pp(
         summary.average_statistics(
-            # columns="size",
+            # columns=["MktCap", "Illiq", "IdioVol"],
             # decimal=3,
             # process_all_characteristics=False,
         )

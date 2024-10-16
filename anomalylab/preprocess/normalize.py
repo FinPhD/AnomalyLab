@@ -25,7 +25,6 @@ class NormalizeMethod:
             )
 
 
-
 @dataclass
 class Normalize(Preprocessor):
 
@@ -59,22 +58,18 @@ class Normalize(Preprocessor):
 
 if __name__ == "__main__":
     from anomalylab.datasets import DataSet
-    from anomalylab.preprocess.fillna import FillNa
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
-    # fill_nan: FillNaN = FillNaN(panel_data=panel)
-    # fill_nan.fill_group_column(
-    #     group_column="industry",
-    #     value="Other",
-    # )
+    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
     norm: Normalize = Normalize(panel_data=panel)
     norm.normalize(
-        # columns="size",
+        # columns="MktCap",
         method="zscore",
         group_columns="time",
-        no_process_columns="size",
+        # no_process_columns="MktCap",
     )
+
     panel = norm.panel_data
     pp(panel)
+    pp(panel.df.head())

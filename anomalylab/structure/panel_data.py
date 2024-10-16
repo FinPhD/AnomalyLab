@@ -14,22 +14,25 @@ class PanelData(Data):
         name (str):
             The name of the object.
         id (str):
-            The column name for the firm identifier. Defaults to "id".
+            The column name for the firm identifier. Defaults to "permno".
         time (str):
             The column name for the time identifier. Defaults to "date".
-        ret (str):
-            The column name for the return. Defaults to "return".
         frequency (Literal["D", "M", "Y"]):
             The frequency of the data. Defaults to "M".
+        ret (str):
+            The column name for the excess return. Defaults to "return".
         classifications (list[str]):
-            The list of classification columns. Defaults to ["industry"].
+            The list of classification columns.
+        drop_all_chars_missing (bool):
+            Whether to drop all rows where all firm_characteristics are missing. Defaults to False.
     """
 
-    id: str = "id"
+    id: str = "permno"
     time: str = "date"
     frequency: Literal["D", "M", "Y"] = "M"
     ret: str = "return"
     classifications: Optional[list[str] | str] = None
+    drop_all_chars_missing: bool = False
 
     def set_flag(self) -> None:
         """Set default flags for the `PanelData` object."""
@@ -40,7 +43,7 @@ class PanelData(Data):
 
     def __repr__(self) -> str:
         return (
-            f"PanelData({self.name})({self.frequency}), "
+            f"PanelData({self.name}), "  # todo: add frequency
             f"classifications={self.classifications}, "
             f"fillna={self.fillna}, "
             f"normalize={self.normalize}, "
@@ -52,7 +55,7 @@ class PanelData(Data):
         """
         Preprocess the `DataFrame` by renaming columns and identifying firm characteristics.
 
-        This method renames the `id`, `time`, and `return` columns to standardized names
+        This method renames the `id`, `time`, and `ret` columns to standardized names
         and identifies remaining columns as firm characteristics, excluding classifications.
         """
         self.df = self.df.rename(
@@ -85,6 +88,30 @@ class PanelData(Data):
                 self.df.columns,
             )
         )
+        self.clean_data()
+
+    def clean_data(self) -> None:
+        """Function to clean data"""
+        if self.drop_all_chars_missing:
+            # Count the number of rows before cleaning
+            initial_row_count: int = len(self.df)
+
+            # Drop rows where all firm_characteristics are missing
+            self.df.dropna(
+                subset=list(self.firm_characteristics), how="all", inplace=True
+            )
+
+            # Count the number of rows after cleaning
+            final_row_count: int = len(self.df)
+
+            # Print corresponding message based on the number of rows removed
+            rows_removed: int = initial_row_count - final_row_count
+            if rows_removed > 0:
+                print(
+                    f"{rows_removed} rows with all missing firm characteristics have been removed."
+                )
+            else:
+                print("No rows with all missing firm characteristics were found.")
 
     def _check_columns(self) -> None:
         """Check if the required columns are present in the DataFrame.
@@ -150,7 +177,7 @@ class PanelData(Data):
         self,
         columns: list[str] | str,
         check_range: Literal["all", "classifications", "characteristics"] = "all",
-        warning: bool = False,
+        use_warning: bool = False,
     ) -> None:
         columns = columns_to_list(columns=columns)
         if check_range == "all":
@@ -169,7 +196,7 @@ class PanelData(Data):
             message: str = (
                 f"Missing columns in PanelData({self.name}): {missing_columns}"
             )
-            if warning:
+            if use_warning:
                 warnings.warn(message=message)
             else:
                 raise ValueError(message)
@@ -180,12 +207,14 @@ if __name__ == "__main__":
 
     df: DataFrame = DataSet.get_panel_data()
     pp(df)
+
     panel_data: PanelData = PanelData(
         df=df,
-        name="panel",
-        # id="ids",
-        # time="dates",
-        # classifications="industry",
+        name="Stocks",
+        # id="permno",
+        # time="date",
+        classifications="industry",
+        drop_all_chars_missing=True,
     )
     pp(panel_data)
     pp(panel_data.firm_characteristics)

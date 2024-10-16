@@ -52,27 +52,18 @@ class Shift(Preprocessor):
 
 if __name__ == "__main__":
     from anomalylab.datasets import DataSet
-    from anomalylab.preprocess.fillna import FillNa
-    from anomalylab.preprocess.normalize import Normalize
-    from anomalylab.preprocess.winsorize import Winsorize
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
-    fill_nan: FillNa = FillNa(panel_data=panel)
-    fill_nan.fill_group_column(
-        group_column="industry",
-        value="Other",
-    )
-    fill_nan.fillna(
-        method="mean",
-        group_columns="time",
-    )
+    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
     shift = Shift(panel_data=panel)
     shift.shift(
-        # columns="size",
-        # periods=[-1, 0, 1, 1],
-        # no_process_columns="size",
+        # columns="MktCap",
+        periods=[-1, 1],
+        # no_process_columns="MktCap",
         # dropna=True,
     )
+
+    panel = shift.panel_data
+    pp(panel)
     pp(panel.df)
