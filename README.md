@@ -27,5 +27,5 @@ Additionally, we have added several extra features, such as:
 The package can be installed via:
 
 ```bash
-pip install <anomalylab>
+pip install anomalylab
 ```
