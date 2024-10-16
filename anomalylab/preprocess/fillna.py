@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from anomalylab.preprocess.preprocessor import Preprocessor
-from anomalylab.structure import PanelData, TimeSeries
+from anomalylab.structure import PanelData
 from anomalylab.utils.imports import *
 from anomalylab.utils.utils import *
 
@@ -33,7 +33,7 @@ class FillNa(Preprocessor):
         method: Literal["mean", "median", "constant"] = "mean",
         call_internal: bool = False,
     ) -> Series:
-        """Fills missing values in a `Series` using the specified method.
+        """Fill missing values in a `Series` using the specified method.
 
         Args:
             series (Series): The `Series` to fill.
@@ -140,16 +140,20 @@ if __name__ == "__main__":
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
+    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
 
     fill_nan: FillNa = FillNa(panel_data=panel)
     fill_nan.fill_group_column(
         group_column="industry",
         value="Other",
     ).fillna(
-        # columns="size",
+        # columns="MktCap",
         method="mean",
-        group_columns="time",
-        # no_process_columns="size",
-        process_all_characteristics=True,
+        group_columns=["time", "industry"],
+        # no_process_columns="MktCap",
+        # process_all_characteristics=True,
     )
+
+    panel = fill_nan.panel_data
+    pp(panel)
+    pp(panel.df.head())

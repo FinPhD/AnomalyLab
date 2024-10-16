@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pandas.core.frame import DataFrame
+from importlib import resources
 
 from anomalylab.config import *
 from anomalylab.empirical import (
@@ -14,17 +14,19 @@ from anomalylab.preprocess import FillNa, Normalize, Shift, Winsorize
 from anomalylab.structure import PanelData, TimeSeries
 from anomalylab.utils import *
 from anomalylab.utils.imports import *
+from anomalylab.visualization import FormatExcel
 
 
 @dataclass
 class Panel:
     df: DataFrame
     name: Optional[str] = None
-    id: str = "id"
+    id: str = "permno"
     time: str = "date"
     frequency: Literal["D", "M", "Y"] = "M"
     ret: str = "return"
     classifications: Optional[list[str] | str] = None
+    drop_all_chars_missing: bool = False
 
     def __post_init__(self) -> None:
         self.panel_data: PanelData = PanelData(
@@ -35,8 +37,8 @@ class Panel:
             frequency=self.frequency,
             ret=self.ret,
             classifications=self.classifications,
+            drop_all_chars_missing=self.drop_all_chars_missing,
         )
-        self.panel_data.set_flag()
         self._normalize_processor = None
         self._fillna_processor = None
         self._winsorize_processor = None
@@ -46,6 +48,7 @@ class Panel:
         self._persistence_processor = None
         self._portfolio_analysis_processor = None
         self._fm_preprocessor = None
+        self._format_preprocessor = None
 
     def __repr__(self) -> str:
         return repr(self.panel_data)
@@ -98,11 +101,20 @@ class Panel:
             self._persistence_processor = Persistence(panel_data=self.panel_data)
         return self._persistence_processor
 
-    @property
-    def portfolio_analysis_processor(self) -> PortfolioAnalysis:
+    def portfolio_analysis_processor(
+        self,
+        endog: Optional[str] = None,
+        weight: Optional[str] = None,
+        models: Optional[dict[str, list[str]]] = None,
+        factors_series: Optional[TimeSeries] = None,
+    ) -> PortfolioAnalysis:
         if self._portfolio_analysis_processor is None:
             self._portfolio_analysis_processor = PortfolioAnalysis(
-                panel_data=self.panel_data
+                panel_data=self.panel_data,
+                endog=endog,
+                weight=weight,
+                models=models,
+                factors_series=factors_series,
             )
         return self._portfolio_analysis_processor
 
@@ -111,6 +123,11 @@ class Panel:
         if self._fm_preprocessor is None:
             self._fm_preprocessor = FamaMacBethRegression(panel_data=self.panel_data)
         return self._fm_preprocessor
+
+    def format_preprocessor(self, path: str) -> FormatExcel:
+        if self._format_preprocessor is None:
+            self._format_preprocessor = FormatExcel(path=path)
+        return self._format_preprocessor
 
     def normalize(
         self,
@@ -220,73 +237,204 @@ class Panel:
             decimal=decimal,
         )
 
+    def persistence(
+        self,
+        columns: Columns = None,
+        periods: int | list[int] = 1,
+        no_process_columns: Columns = None,
+        process_all_characteristics: bool = True,
+        decimal: Optional[int] = None,
+    ) -> DataFrame:
+        return self.persistence_processor.average_persistence(
+            columns=columns,
+            periods=periods,
+            no_process_columns=no_process_columns,
+            process_all_characteristics=process_all_characteristics,
+            decimal=decimal,
+        )
+
+    def transition_matrix(
+        self,
+        var: str,
+        group: int,
+        lag: int,
+        draw: bool = False,
+        path: Optional[str] = None,
+        decimal: Optional[int] = None,
+    ) -> pd.DataFrame:
+        return self.persistence_processor.transition_matrix(
+            var=var,
+            group=group,
+            lag=lag,
+            draw=draw,
+            path=path,
+            decimal=decimal,
+        )
+
+    def univariate_analysis(
+        self,
+        endog: str,
+        weight: str,
+        core_var: str,
+        core_g: int,
+        models: Optional[dict[str, list[str]]] = None,
+        factors_series: Optional[TimeSeries] = None,
+        format: bool = False,
+        decimal: Optional[int] = None,
+    ) -> tuple:
+        return self.portfolio_analysis_processor(
+            endog=endog, weight=weight, models=models, factors_series=factors_series
+        ).univariate_analysis(
+            core_var=core_var,
+            core_g=core_g,
+            format=format,
+            decimal=decimal,
+        )
+
+    def bivariate_analysis(
+        self,
+        endog: str,
+        weight: str,
+        sort_var: str,
+        core_var: str,
+        sort_g: int,
+        core_g: int,
+        models: Optional[dict[str, list[str]]] = None,
+        factors_series: Optional[TimeSeries] = None,
+        pivot: bool = True,
+        format: bool = False,
+        type: str = "dependent",
+        decimal: Optional[int] = None,
+    ) -> tuple:
+        return self.portfolio_analysis_processor(
+            endog=endog, weight=weight, models=models, factors_series=factors_series
+        ).bivariate_analysis(
+            sort_var=sort_var,
+            core_var=core_var,
+            sort_g=sort_g,
+            core_g=core_g,
+            pivot=pivot,
+            format=format,
+            type=type,
+            decimal=decimal,
+        )
+
     def fm_reg(
         self,
-        dependent: Optional[str] = None,
-        exogenous: Optional[list[str]] = None,
+        endog: Optional[str] = None,
+        exog: Optional[list[str]] = None,
         models: Optional[list[list[str] | dict[str, list[str]]]] = None,
-        exogenous_order: Optional[list[str]] = None,
+        exog_order: Optional[list[str]] = None,
         model_names: Optional[list[str]] = None,
-        weight_column: Optional[str] = None,
-        industry_column: Optional[str] = None,
+        weight: Optional[str] = None,
+        industry: Optional[str] = None,
         industry_weighed_method: Literal["value", "equal"] = "value",
         is_winsorize: bool = False,
         is_normalize: bool = False,
         decimal: Optional[int] = None,
     ) -> DataFrame:
         return self.fm_preprocessor.fit(
-            dependent=dependent,
-            exogenous=exogenous,
+            endog=endog,
+            exog=exog,
             models=models,
-            exogenous_order=exogenous_order,
+            exog_order=exog_order,
             model_names=model_names,
-            weight_column=weight_column,
-            industry_column=industry_column,
+            weight_column=weight,
+            industry_column=industry,
             industry_weighed_method=industry_weighed_method,
             is_winsorize=is_winsorize,
             is_normalize=is_normalize,
             decimal=decimal,
         )
 
+    def format_excel(self, path: str) -> None:
+        self.format_preprocessor(path=path).process()
+
 
 if __name__ == "__main__":
     from anomalylab.datasets import DataSet
-    from anomalylab.preprocess.fillna import FillNa
 
     df: DataFrame = DataSet.get_panel_data()
-    panel = Panel(df, classifications="industry")
+    ts: DataFrame = DataSet.get_time_series_data()
+    Models: dict[str, list[str]] = {
+        "CAPM": ["MKT(3F)"],
+        "FF3": ["MKT(3F)", "SMB(3F)", "HML(3F)"],
+        "FF5": ["MKT(5F)", "SMB(5F)", "HML(5F)", "RMW(5F)", "CMA(5F)"],
+    }
+
+    panel = Panel(df, name="Stocks", classifications="industry")
+    time_series: TimeSeries = TimeSeries(df=ts, name="Factor Series")
     pp(panel)
-    panel.fill_group_column(group_column="industry", value="Other")
-    panel.fillna(
-        # columns="size",
-        # method="mean",
-        group_columns="time",
-        # no_process_columns="size",
-        # process_all_characteristics=True,
-    )
-    panel.normalize(
-        # columns="size",
-        # method="zscore",
-        # group_columns="time",
-        # no_process_columns="size",
-        # process_all_characteristics=False,
-    )
-    panel.winsorize()
+
+    # panel.fill_group_column(group_column="industry", value="Other")
+    # panel.fillna(
+    #     # columns="MktCap",
+    #     # method="mean",
+    #     group_columns="time",
+    #     # no_process_columns="MktCap",
+    #     # process_all_characteristics=True,
+    # )
+    # panel.normalize(
+    #     # columns="MktCap",
+    #     # method="zscore",
+    #     # group_columns="time",
+    #     # no_process_columns="MktCap",
+    #     # process_all_characteristics=False,
+    # )
     # panel.shift()
+
+    panel.winsorize()
     pp(panel)
+
     pp(panel.summary())
     pp(panel.correlation())
+    pp(panel.persistence(periods=[1, 3, 6, 12, 36, 60]))
+    pp(
+        panel.transition_matrix(
+            "MktCap",
+            10,
+            12,
+            False,
+            str(resources.files("anomalylab.datasets")) + "/transition_matrix.png",
+        )
+    )
+    uni_ew, uni_vw = panel.univariate_analysis(
+        "ret", "MktCap", "Illiq", 10, Models, time_series
+    )
+    pp(uni_ew)
+    pp(uni_vw)
+
+    bi_ew, bi_vw = panel.bivariate_analysis(
+        "ret",
+        "MktCap",
+        "Illiq",
+        "IdioVol",
+        5,
+        5,
+        Models,
+        time_series,
+        True,
+        False,
+        "dependent",
+    )
+    pp(bi_ew)
+    pp(bi_vw)
+
     pp(
         panel.fm_reg(
             models=[
-                ["ret", "size", "illiquidity"],
-                ["ret", "size"],
-                ["ret", "idiosyncratic_volatility"],
+                ["ret", "MktCap"],
+                ["ret", "Illiq"],
+                ["ret", "IdioVol"],
+                ["ret", "MktCap", "Illiq", "IdioVol"],
             ],
-            weight_column="size",
-            industry_column="industry",
+            exog_order=["MktCap", "Illiq", "IdioVol"],
+            weight="MktCap",
+            industry="industry",
             industry_weighed_method="value",
-            is_winsorize=True,
+            is_winsorize=False,
             is_normalize=True,
         )
     )
+
+    # panel.format_excel("...")

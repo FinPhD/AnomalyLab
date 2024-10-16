@@ -11,8 +11,8 @@ class Preprocessor(ABC):
 
     def __post_init__(self) -> None:
         self.panel_data = self.panel_data.copy()
-        self.id: str = self.panel_data.id
-        self.time: str = self.panel_data.time
+        self.id = self.panel_data.id
+        self.time = self.panel_data.time
 
     def construct_process_columns(
         self,
@@ -25,23 +25,17 @@ class Preprocessor(ABC):
             self.panel_data.check_columns_existence(
                 columns=no_process_columns,
                 check_range="characteristics",
-                warning=True,
+                use_warning=True,
             )
             # Set columns to the characteristics columns, excluding any no_process_columns
-            columns = list(
-                set(self.panel_data.firm_characteristics)
-                - set(no_process_columns or [])
+            columns = sorted(
+                list(
+                    set(self.panel_data.firm_characteristics)
+                    - set(no_process_columns or [])
+                )
             )
         elif (not process_all_characteristics) and (columns == []):
             raise ValueError(
                 "If 'process_all_characteristics' is set to False, you must provide columns to process."
             )
-        # elif process_all_characteristics and columns != []:
-            # warnings.warn(
-            #     message=(
-            #         f"\nThe 'process_all_characteristics' flag is set to True, but columns are provided.\n"
-            #         f"Do you mean to process only the provided columns: {columns}?"
-            #     )
-            # )
-            # process_all_characteristics = False
         return columns

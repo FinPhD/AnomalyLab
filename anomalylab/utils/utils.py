@@ -11,14 +11,18 @@ class RegModels:
     models: list[RegModel]
 
     def __post_init__(self):
-        self.dependent = list({key for item in self.models for key in item.keys()})
-        self.exogenous: list[str] = sorted(list(
-            {
-                value
-                for item in self.models
-                for value in chain.from_iterable(item.values())
-            }
-        ))
+        self.dependent = sorted(
+            list({key for item in self.models for key in item.keys()})
+        )
+        self.exogenous: list[str] = sorted(
+            list(
+                {
+                    value
+                    for item in self.models
+                    for value in chain.from_iterable(item.values())
+                }
+            )
+        )
 
 
 class RegResult(TypedDict):
@@ -94,3 +98,19 @@ def singleton(cls) -> Callable:
         return instances[cls]
 
     return get_instance
+
+
+if __name__ == "__main__":
+    # Test data
+    test_models: list[dict[str, list[str]]] = [
+        {"y1": ["x1", "x2"]},
+        {"y3": ["x2", "x3"]},
+        {"y2": ["x3", "x4", "x5"]},
+    ]
+
+    # Create an instance of RegModels with test data
+    reg_models = RegModels(test_models)
+
+    # Print outputs to verify the behavior
+    print("Dependent:", reg_models.dependent)
+    print("Exogenous:", reg_models.exogenous)

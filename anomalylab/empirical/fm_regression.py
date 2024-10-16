@@ -1,8 +1,6 @@
-from logging import warn, warning
-
 from anomalylab.config import *
 from anomalylab.empirical.empirical import Empirical
-from anomalylab.preprocess import Normalize, Winsorize
+from anomalylab.preprocess import Winsorize
 from anomalylab.structure import PanelData
 from anomalylab.utils.imports import *
 from anomalylab.utils.utils import *
@@ -15,7 +13,7 @@ class FamaMacBethRegression(Empirical):
     def _winsorize(self, is_winsorize: bool, exogenous: list[str]):
         if is_winsorize:
             if self.temp_panel.outliers != "unprocessed":
-                warning.warn(
+                warnings.warn(
                     "Outliers have been processed, winsorization may not be necessary."
                 )
             self.temp_panel = (
@@ -29,7 +27,7 @@ class FamaMacBethRegression(Empirical):
 
     def _industry_weighted(
         self,
-        dependent: list[str],
+        endog: list[str],
         industry_column: Optional[str],
         industry_weighed_method: str,
         weight_column: Optional[str] = None,
@@ -49,9 +47,9 @@ class FamaMacBethRegression(Empirical):
                 raise ValueError(
                     f"industry_weighed_method must be one of ['value', 'equal']"
                 )
-            self.temp_panel.df[dependent] -= self.temp_panel.df.groupby(
+            self.temp_panel.df[endog] -= self.temp_panel.df.groupby(
                 by=["time", industry_column]
-            )[dependent].transform(func=func)
+            )[endog].transform(func=func)
 
     def _reg(
         self,
@@ -136,15 +134,15 @@ class FamaMacBethRegression(Empirical):
     def _model_parse(
         self,
         models: Optional[list[list[str] | dict[str, list[str]]]],
-        dependent: Optional[str],
-        exogenous: Optional[list[str]],
+        endog: Optional[str],
+        exog: Optional[list[str]],
     ) -> RegModels:
         if models is None:
-            if dependent is None:
+            if endog is None:
                 raise ValueError("dependent variable must be provided.")
-            if exogenous is None:
+            if exog is None:
                 raise ValueError("exogenous variables must be provided.")
-            return RegModels(models=[{dependent: exogenous}])
+            return RegModels(models=[{endog: exog}])
         else:
             if all(isinstance(model, list) for model in models):
                 return RegModels(models=[{model[0]: model[1:]} for model in models])  # type: ignore
@@ -155,10 +153,10 @@ class FamaMacBethRegression(Empirical):
 
     def fit(
         self,
-        dependent: Optional[str] = None,
-        exogenous: Optional[list[str]] = None,
+        endog: Optional[str] = None,
+        exog: Optional[list[str]] = None,
         models: Optional[list[list[str] | dict[str, list[str]]]] = None,
-        exogenous_order: Optional[list[str]] = None,
+        exog_order: Optional[list[str]] = None,
         model_names: Optional[list[str]] = None,
         weight_column: Optional[str] = None,
         industry_column: Optional[str] = None,
@@ -169,17 +167,15 @@ class FamaMacBethRegression(Empirical):
     ) -> DataFrame:
         # Preparation
         self.temp_panel: PanelData = self.panel_data.copy()
-        reg_models: RegModels = self._model_parse(
-            models=models, dependent=dependent, exogenous=exogenous
-        )
+        reg_models: RegModels = self._model_parse(models=models, endog=endog, exog=exog)
         self._winsorize(is_winsorize=is_winsorize, exogenous=reg_models.exogenous)
         self._industry_weighted(
-            dependent=reg_models.dependent,
+            endog=reg_models.dependent,
             industry_column=industry_column,
             industry_weighed_method=industry_weighed_method,
             weight_column=weight_column,
         )
-        exogenous_order = (exogenous_order or reg_models.exogenous) + ["const"]
+        exog_order = (exog_order or reg_models.exogenous) + ["const"]
         # Regression
         df: DataFrame = (
             pd.concat(
@@ -191,13 +187,13 @@ class FamaMacBethRegression(Empirical):
                             is_normalize=is_normalize,
                         ),
                         decimal=decimal or self.decimal,
-                        exogenous_order=exogenous_order,
+                        exogenous_order=exog_order,
                     )
                     for model in reg_models.models
                 ],
                 axis=1,
             )
-            .loc[exogenous_order + ["No. Obs.", "Adj. R²"]]
+            .loc[exog_order + ["No. Obs.", "Adj. R²"]]
             .droplevel(level=1)
             .fillna(value="")
         )
@@ -210,43 +206,33 @@ class FamaMacBethRegression(Empirical):
 
 if __name__ == "__main__":
     from anomalylab.datasets import DataSet
-    from anomalylab.preprocess.fillna import FillNa
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
-    # panel = (
-    #     FillNa(panel_data=panel)
-    #     .fill_group_column(
-    #         group_column="industry",
-    #         value="Other",
-    #     )
-    #     .fillna(
-    #         method="mean",
-    #         group_columns="time",
-    #     )
-    #     .panel_data
-    # )
-    # normalize: Normalize = Normalize(panel_data=panel)
-    # normalize.normalize(
-    #     group_columns="time",
-    # )
+    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
+
     fm = FamaMacBethRegression(panel_data=panel)
     result = fm.fit(
         # dependent="ret",
-        # exogenous=["size", "illiquidity"],
-        # exogenous_order=["illiquidity", "size", "idiosyncratic_volatility"],
+        # exogenous=["MktCap", "Illiq", "IdioVol"],
+        exog_order=["MktCap", "Illiq", "IdioVol"],
         models=[
-            ["ret", "size", "illiquidity"],
-            # ["ret", "size"],
-            ["ret", "idiosyncratic_volatility"],
+            ["ret", "MktCap"],
+            ["ret", "Illiq"],
+            ["ret", "IdioVol"],
+            ["ret", "MktCap", "Illiq", "IdioVol"],
         ],
-        # models=[{"ret": ["size", "illiquidity"]}],
-        # weight_column="size",
-        # industry_column="industry",
-        # industry_weighed_method="value",
+        # models=[
+        #     {"ret": ["MktCap"]},
+        #     {"ret": ["Illiq"]},
+        #     {"ret": ["IdioVol"]},
+        #     {"ret": ["MktCap", "Illiq", "IdioVol"]},
+        # ],
+        industry_column="industry",
+        industry_weighed_method="value",
+        weight_column="MktCap",
         # is_winsorize=True,
         is_normalize=True,
-        decimal=2,
+        # decimal=2,
     )
     pp(object=result)

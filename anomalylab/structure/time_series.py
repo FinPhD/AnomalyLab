@@ -14,17 +14,17 @@ class TimeSeries(Data):
         name (str):
             The name of the object.
         time (str):
-            The column name for the time identifier. Defaults to "time".
-        time_format (str):
-            The format of the time column. Defaults to "%Y%m".
+            The column name for the time identifier. Defaults to "date".
+        frequency (Literal["D", "M", "Y"]):
+            The frequency of the data. Defaults to "M".
     """
 
-    time: str = "time"
-    time_format: str = "%Y%m"
+    time: str = "date"
+    frequency: Literal["D", "M", "Y"] = "M"
     factors: list[str] = field(init=False)
 
     def __repr__(self) -> str:
-        return f"TimeSeriesData({self.name})"
+        return f"TimeSeriesData({self.name})"  # todo: add frequency
 
     def _preprocess(self) -> None:
         """
@@ -34,6 +34,12 @@ class TimeSeries(Data):
         """
         self.df = self.df.rename(columns={self.time: "time"})
         self.time = "time"
+        # todo: add support for daily and yearly frequency
+        if self.frequency != "M":
+            raise NotImplementedError("Only monthly frequency is supported.")
+        self.df["time"] = pd.to_datetime(self.df["time"], format="ISO8601")
+        self.df["time"] = self.df["time"].dt.to_period(freq=self.frequency)
+        self.df = self.df.sort_values(by="time")
         self.factors = list(self.df.columns)
         self.factors.remove("time")
 
@@ -56,6 +62,6 @@ if __name__ == "__main__":
     from anomalylab.datasets import DataSet
 
     df: DataFrame = DataSet.get_time_series_data()
-    time_series: TimeSeries = TimeSeries(df=df, name="FF3 and FF5", time="date")
+    time_series: TimeSeries = TimeSeries(df=df, name="CAPM, FF3 and FF5")
     pp(time_series)
     pp(time_series.factors)

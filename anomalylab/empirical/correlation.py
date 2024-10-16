@@ -46,24 +46,9 @@ class Correlation(Empirical):
 
 if __name__ == "__main__":
     from anomalylab.datasets import DataSet
-    from anomalylab.preprocess.fillna import FillNa
-    from anomalylab.preprocess.normalize import Normalize
 
     df: DataFrame = DataSet.get_panel_data()
 
     panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
-    fill_nan: FillNa = FillNa(panel_data=panel)
-    fill_nan.fill_group_column(
-        group_column="industry",
-        value="Other",
-    )
-    fill_nan.fillna(
-        method="mean",
-        group_columns="time",
-    )
-    normalize: Normalize = Normalize(panel_data=panel)
-    normalize.normalize(
-        group_columns="time",
-    )
     correlation: Correlation = Correlation(panel_data=panel)
-    pp(correlation.average_correlation(decimal=3))
+    pp(correlation.average_correlation())
