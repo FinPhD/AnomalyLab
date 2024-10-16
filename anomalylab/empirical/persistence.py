@@ -10,6 +10,17 @@ from anomalylab.utils.utils import *
 
 @dataclass
 class Persistence(Empirical):
+    """
+    A class for calculating average persistence statistics from empirical panel data
+    and calculating the transition matrix for a specified variable and lag.
+
+    This class extends the Empirical class and provides functionality to compute
+    average autocorrelations (persistence) and transition matrix of specified variables over given time
+    periods. The results can be formatted to a specified number of decimal places.
+
+    Attributes:
+        panel_data (PanelData): The panel data object containing the data for persistence analysis.
+    """
 
     def average_persistence(
         self,
@@ -19,6 +30,30 @@ class Persistence(Empirical):
         process_all_characteristics: bool = True,
         decimal: Optional[int] = None,
     ) -> pd.DataFrame:
+        """
+        Computes average persistence (autocorrelation) for specified columns over defined time periods.
+
+        This method constructs the list of columns to process, sorts the DataFrame by date,
+        creates lagged variables, and calculates the average correlations for each variable
+        and lag period. The results are returned as a DataFrame.
+
+        Args:
+            columns (Columns, optional): The columns for which to calculate persistence. Defaults to None.
+            periods (int | list[int], optional): The time periods (lags) to consider for autocorrelation.
+                Defaults to 1.
+            no_process_columns (Columns, optional): The columns to exclude from processing. Defaults to None.
+            process_all_characteristics (bool, optional): Whether to process all characteristics or not.
+                Defaults to True.
+            decimal (Optional[int], optional): The number of decimal places to round the results to.
+                Defaults to None.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the average persistence for specified columns.
+
+        Note:
+            The resulting DataFrame contains the average correlations for each lag, formatted to the
+            specified number of decimal places.
+        """
         # Construct the columns to process
         columns = self.construct_process_columns(
             columns=columns_to_list(columns=columns),

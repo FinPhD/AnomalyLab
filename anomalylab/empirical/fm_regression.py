@@ -9,8 +9,28 @@ from anomalylab.utils.utils import RegModels, RegResult
 
 @dataclass
 class FamaMacBethRegression(Empirical):
+    """
+    A class for performing Fama-MacBeth regression analysis on empirical panel data.
+
+    This class extends the Empirical class and offers methods to conduct Fama-MacBeth
+    regressions, including options for winsorization, industry weighting, and model parsing.
+    The results are formatted and returned in a structured DataFrame.
+
+    Attributes:
+        panel_data (PanelData): The panel data object containing the data for regression analysis.
+    """
 
     def _winsorize(self, is_winsorize: bool, exogenous: list[str]):
+        """
+        Applies winsorization to specified columns if indicated by the user.
+
+        This method checks if winsorization is needed and applies it to the exogenous
+        variables if the panel data has not been processed for outliers.
+
+        Args:
+            is_winsorize (bool): A flag indicating whether to apply winsorization.
+            exogenous (list[str]): The list of exogenous variables to winsorize.
+        """
         if is_winsorize:
             if self.temp_panel.outliers != "unprocessed":
                 warnings.warn(
@@ -32,6 +52,19 @@ class FamaMacBethRegression(Empirical):
         industry_weighed_method: str,
         weight_column: Optional[str] = None,
     ) -> None:
+        """
+        Adjusts the endogenous variables based on industry weighting.
+
+        This method checks the existence of the specified industry column and applies
+        the chosen weighting method (either 'equal' or 'value') to the endogenous variables
+        based on the industry grouping.
+
+        Args:
+            endog (list[str]): The list of endogenous variables to adjust.
+            industry_column (Optional[str]): The column name representing the industry.
+            industry_weighed_method (str): The method of weighting ('equal' or 'value').
+            weight_column (Optional[str]): The column to be used as weights if 'value' method is selected.
+        """
         self.temp_panel.check_columns_existence(
             columns=columns_to_list(columns=industry_column),
             check_range="all",
@@ -57,6 +90,21 @@ class FamaMacBethRegression(Empirical):
         model: RegModel,
         is_normalize: bool,
     ) -> RegResult:
+        """
+        Performs the Fama-MacBeth regression analysis on the specified DataFrame.
+
+        This method prepares the data, runs the regression using the specified model,
+        and applies Newey-West adjustment for standard errors.
+
+        Args:
+            df (DataFrame): The DataFrame containing the data to be analyzed.
+            model (RegModel): The regression model specifying dependent and independent variables.
+            is_normalize (bool): A flag indicating whether to normalize the exogenous variables.
+
+        Returns:
+            RegResult: An object containing regression results including parameters, t-values,
+            p-values, number of observations, and adjusted R-squared.
+        """
         dependent: str = list(model.keys())[0]
         exogenous: list[str] = list(model.values())[0]
         df = df[["id", "time"] + exogenous + [dependent]].dropna()
@@ -96,6 +144,20 @@ class FamaMacBethRegression(Empirical):
         )
 
     def _cal_adjusted_r2(self, group, dependent: str, exogenous: list[str]):
+        """
+        Calculates the adjusted R-squared for a given group of data.
+
+        This method performs an OLS regression on the specified group and returns
+        the adjusted R-squared statistic.
+
+        Args:
+            group: The group of data for which to calculate adjusted R-squared.
+            dependent (str): The dependent variable name.
+            exogenous (list[str]): The list of exogenous variable names.
+
+        Returns:
+            float: The adjusted R-squared value from the regression.
+        """
         return (
             sm.OLS(
                 endog=group[dependent],
@@ -113,6 +175,20 @@ class FamaMacBethRegression(Empirical):
         decimal: int,
         exogenous_order: list[str],
     ) -> Series:
+        """
+        Formats the regression results into a Series for output.
+
+        This method compiles the regression parameters, t-values, and additional
+        statistics into a structured Series, rounded to the specified decimal places.
+
+        Args:
+            reg_result (RegResult): The regression result object containing various statistics.
+            decimal (int): The number of decimal places for rounding.
+            exogenous_order (list[str]): The order of exogenous variables for formatting.
+
+        Returns:
+            Series: A Series containing formatted regression results.
+        """
         result: Series = pd.DataFrame(
             data={
                 "params": reg_result["params"].map(
@@ -137,6 +213,24 @@ class FamaMacBethRegression(Empirical):
         endog: Optional[str],
         exog: Optional[list[str]],
     ) -> RegModels:
+        """
+        Parses the models specified by the user into a structured format.
+
+        This method checks the format of the provided models and ensures that
+        they are either lists of exogenous variables or dictionaries mapping
+        dependent variables to lists of exogenous variables.
+
+        Args:
+            models (Optional[list[list[str] | dict[str, list[str]]]]): The models provided by the user.
+            endog (Optional[str]): The dependent variable name.
+            exog (Optional[list[str]]): The list of exogenous variable names.
+
+        Returns:
+            RegModels: An object containing the parsed regression models.
+
+        Raises:
+            ValueError: If the models are not in the expected format.
+        """
         if models is None:
             if endog is None:
                 raise ValueError("dependent variable must be provided.")
@@ -165,6 +259,34 @@ class FamaMacBethRegression(Empirical):
         is_normalize: bool = False,
         decimal: Optional[int] = None,
     ) -> DataFrame:
+        """
+        Fits the Fama-MacBeth regression model to the panel data.
+
+        This method prepares the data, applies any specified preprocessing steps
+        (such as winsorization and industry weighting), and conducts regression
+        analysis using the specified models. The results are formatted and returned
+        in a DataFrame.
+
+        Args:
+            endog (Optional[str]): The dependent variable name.
+            exog (Optional[list[str]]): The list of exogenous variable names.
+            models (Optional[list[list[str] | dict[str, list[str]]]]): The regression models to fit.
+            exog_order (Optional[list[str]]): The order of exogenous variables.
+            model_names (Optional[list[str]]): The names for the models in the output.
+            weight_column (Optional[str]): The column to be used as weights for industry weighting.
+            industry_column (Optional[str]): The column representing the industry.
+            industry_weighed_method (Literal["value", "equal"], optional): The method for industry weighting.
+                Defaults to "value".
+            is_winsorize (bool): A flag indicating whether to apply winsorization. Defaults to False.
+            is_normalize (bool): A flag indicating whether to normalize exogenous variables. Defaults to False.
+            decimal (Optional[int]): The number of decimal places for rounding results. Defaults to None.
+
+        Returns:
+            DataFrame: A DataFrame containing the formatted regression results.
+
+        Raises:
+            ValueError: If the dependent or exogenous variables are not provided.
+        """
         # Preparation
         self.temp_panel: PanelData = self.panel_data.copy()
         reg_models: RegModels = self._model_parse(models=models, endog=endog, exog=exog)

@@ -8,16 +8,59 @@ from anomalylab.utils.utils import *
 
 @dataclass
 class FillMethod:
+    """
+    A class to handle filling missing values in a Pandas Series.
+
+    This class provides different methods to fill missing values (NaNs) in a
+    given Series. The available methods include filling with the mean, median,
+    or a specified constant value.
+
+    Attributes:
+        series (Series): The Pandas Series containing missing values to be filled.
+        value (Optional[Scalar]): The constant value to fill missing entries, if
+            using the constant fill method.
+    """
+
     series: Series
     value: Optional[Scalar] = None
 
     def mean(self) -> Series:
+        """
+        Fills missing values in the Series with the mean of the Series.
+
+        This method computes the mean of the Series and replaces all NaN
+        values with this mean.
+
+        Returns:
+            Series: A new Series with NaN values replaced by the mean.
+        """
         return self.series.fillna(value=self.series.mean())
 
     def median(self) -> Series:
+        """
+        Fills missing values in the Series with the median of the Series.
+
+        This method computes the median of the Series and replaces all NaN
+        values with this median.
+
+        Returns:
+            Series: A new Series with NaN values replaced by the median.
+        """
         return self.series.fillna(value=self.series.median())
 
     def constant(self) -> Series:
+        """
+        Fills missing values in the Series with a specified constant value.
+
+        This method replaces NaN values with a user-defined constant value.
+        If no value is provided, it raises a ValueError.
+
+        Returns:
+            Series: A new Series with NaN values replaced by the constant value.
+
+        Raises:
+            ValueError: If the constant fill value is not specified.
+        """
         if self.value is None:
             raise ValueError("Fill value is required for constant method.")
         return self.series.fillna(value=self.value)
@@ -98,19 +141,49 @@ class FillNa(Preprocessor):
         no_process_columns: Columns = None,
         process_all_characteristics: bool = True,
     ) -> FillNa:
+        """
+        Fills missing values in specified columns of the DataFrame using the chosen method.
+
+        This method allows users to specify which columns to fill missing values in,
+        the method of filling (mean, median, or a constant value), and any grouping
+        columns to apply the filling operation. It also offers the option to exclude
+        certain columns from processing. The method will check for warnings regarding
+        missing values and normalization status.
+
+        Args:
+            columns (Columns, optional): The columns to fill missing values in. Defaults to None.
+            method (Literal["mean", "median", "constant"], optional): The method to use for
+                filling missing values. Defaults to "mean".
+            value (Optional[Union[float, int]], optional): The constant value to use if the
+                method is 'constant'. Defaults to None.
+            group_columns (Columns, optional): The columns to group by during filling. Defaults to None.
+            no_process_columns (Columns, optional): The columns to exclude from filling. Defaults to None.
+            process_all_characteristics (bool, optional): Whether to process all characteristics.
+                Defaults to True.
+
+        Returns:
+            FillNa: The instance of the FillNa class with updated state.
+
+        Note:
+            This method modifies the `panel_data` attribute to indicate that missing
+            values have been filled.
+        """
         # Convert columns to list
         columns = columns_to_list(columns)
         group_columns = columns_to_list(group_columns)
         no_process_columns = columns_to_list(no_process_columns)
+
         # Construct the columns to process
         columns = self.construct_process_columns(
             columns=columns,
             no_process_columns=no_process_columns,
             process_all_characteristics=process_all_characteristics,
         )
+
         # Warn if missing values are not found in the fill_columns
         # or if the data has already been normalized
         self._warning(fill_columns=columns)
+
         # Fillna the selected columns
         self.panel_data.transform(
             columns=columns,
@@ -122,11 +195,22 @@ class FillNa(Preprocessor):
             ),
             group_columns=group_columns,
         )
+
         self.panel_data.fillna = True
         return self
 
     def _warning(self, fill_columns: list[str]) -> None:
-        """Warn if missing values are not found in the fill_columns or if the data has already been normalized."""
+        """
+        Issues warnings regarding missing values and normalization status.
+
+        This method checks if any missing values are present in the specified
+        fill_columns. If none are found, it emits a warning. Additionally,
+        it checks if the data has already been normalized, in which case
+        it warns that missing values have been filled with zeros.
+
+        Args:
+            fill_columns (list[str]): The list of columns to check for missing values.
+        """
         if not self.panel_data.df[fill_columns].any().any():
             warnings.warn(message=f"Missing values not found in {fill_columns}.")
         if self.panel_data.normalize:

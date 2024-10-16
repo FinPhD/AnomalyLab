@@ -11,6 +11,20 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 @dataclass
 class PortfolioAnalysis(Empirical):
+    """
+    A class for performing portfolio analysis on empirical financial data.
+
+    This class extends the Empirical class and is designed to analyze portfolios
+    based on specified endogenous variables, weights, and models. It also allows
+    for the inclusion of factor series for more comprehensive analysis.
+
+    Attributes:
+        endog (Optional[str]): The name of the endogenous variable for analysis.
+        weight (Optional[str]): The name of the variable representing portfolio weights.
+        models (Optional[dict[str, list[str]]]): A dictionary mapping model names to lists of exogenous variables.
+        factors_series (Optional[TimeSeries]): A TimeSeries object representing factor models.
+    """
+
     endog: Optional[str] = None
     weight: Optional[str] = None
     models: Optional[dict[str, list[str]]] = None
@@ -260,6 +274,7 @@ class PortfolioAnalysis(Empirical):
             core_var (str): The core variable for which the analysis is to be performed.
             core_g (int): The group number for portfolio grouping of the core variable.
             format (bool): Whether to format the output for display. Defaults to False.
+            decimal (Optional[int]): The number of decimal places for formatting. Defaults to None.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -319,7 +334,7 @@ class PortfolioAnalysis(Empirical):
             This function extracts time series for each unique group and stores them in a dictionary.
 
             Args:
-                df (DataFrame): The DataFrame containing the time series data.
+                series (Series): The Series containing the time series data.
 
             Returns:
                 dict: A dictionary with time series indexed by core variable.
@@ -342,7 +357,7 @@ class PortfolioAnalysis(Empirical):
             based on the specified parameters.
 
             Args:
-                df (DataFrame): The DataFrame containing the time series data.
+                series (Series): The Series containing the time series data.
                 format (bool): Whether to format the output for display. Defaults to False.
 
             Returns:
@@ -418,6 +433,7 @@ class PortfolioAnalysis(Empirical):
             pivot (bool): Whether to pivot the results table. Defaults to True.
             format (bool): Whether to format the output for display. Defaults to False.
             type (str): Type of grouping, can be 'dependent' or 'independent'. Defaults to 'dependent'.
+            decimal (Optional[int]): The number of decimal places to round to. Defaults to None.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.

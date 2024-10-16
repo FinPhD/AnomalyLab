@@ -17,6 +17,8 @@ class TimeSeries(Data):
             The column name for the time identifier. Defaults to "date".
         frequency (Literal["D", "M", "Y"]):
             The frequency of the data. Defaults to "M".
+        factors (list[str]):
+            The list of factor column names. Initialized as an empty list.
     """
 
     time: str = "date"

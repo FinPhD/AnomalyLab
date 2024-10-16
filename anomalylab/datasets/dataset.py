@@ -32,6 +32,5 @@ class DataSet:
 
 
 if __name__ == "__main__":
-    ...
     pp(DataSet.get_panel_data())
     pp(DataSet.get_time_series_data())
