@@ -323,9 +323,9 @@ class Panel:
         self,
         endog: Optional[str] = None,
         exog: Optional[list[str]] = None,
-        models: Optional[list[list[str] | dict[str, list[str]]]] = None,
+        regs: Optional[list[list[str] | dict[str, list[str]]]] = None,
         exog_order: Optional[list[str]] = None,
-        model_names: Optional[list[str]] = None,
+        reg_names: Optional[list[str]] = None,
         weight: Optional[str] = None,
         industry: Optional[str] = None,
         industry_weighed_method: Literal["value", "equal"] = "value",
@@ -336,11 +336,11 @@ class Panel:
         return self.fm_preprocessor.fit(
             endog=endog,
             exog=exog,
-            models=models,
+            regs=regs,
             exog_order=exog_order,
-            model_names=model_names,
-            weight_column=weight,
-            industry_column=industry,
+            reg_names=reg_names,
+            weight=weight,
+            industry=industry,
             industry_weighed_method=industry_weighed_method,
             is_winsorize=is_winsorize,
             is_normalize=is_normalize,
@@ -362,7 +362,9 @@ if __name__ == "__main__":
         "FF5": ["MKT(5F)", "SMB(5F)", "HML(5F)", "RMW(5F)", "CMA(5F)"],
     }
 
-    panel = Panel(df, name="Stocks", classifications="industry")
+    panel = Panel(
+        df, name="Stocks", classifications="industry", drop_all_chars_missing=True
+    )
     time_series: TimeSeries = TimeSeries(df=ts, name="Factor Series")
     pp(panel)
 
@@ -383,7 +385,7 @@ if __name__ == "__main__":
     # )
     # panel.shift()
 
-    panel.winsorize()
+    panel.winsorize(method="winsorize")
     pp(panel)
 
     pp(panel.summary())
@@ -422,7 +424,7 @@ if __name__ == "__main__":
 
     pp(
         panel.fm_reg(
-            models=[
+            regs=[
                 ["ret", "MktCap"],
                 ["ret", "Illiq"],
                 ["ret", "IdioVol"],
