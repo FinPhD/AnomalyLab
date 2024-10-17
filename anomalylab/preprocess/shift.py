@@ -60,7 +60,8 @@ class Shift(Preprocessor):
         """
         # Check if the data has already been shifted
         if self.panel_data.shift:
-            raise ValueError("The data has already been shifted.")
+            # raise ValueError("The data has already been shifted.")
+            warnings.warn("The data has already been shifted. Proceed with caution.")
 
         # Construct the columns to process
         columns = self.construct_process_columns(

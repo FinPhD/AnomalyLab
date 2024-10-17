@@ -59,7 +59,7 @@ class Correlation(Empirical):
         )  # Initialize a matrix for correlations
         is_upper = True
 
-        for method in ["pearson", "spearman"]:
+        for method in ["spearman", "pearson"]:
             rows, cols = (
                 np.triu_indices(columns_number, k=1)  # Get upper triangle indices
                 if is_upper

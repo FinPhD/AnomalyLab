@@ -180,8 +180,9 @@ class Winsorize(Preprocessor):
             ),
             group_columns=group_columns,
         )
-
-        self.panel_data.outliers = method
+        self.panel_data.outliers = (
+            "Winsorized" if method == "winsorize" else "Truncated"
+        )
         return self
 
 

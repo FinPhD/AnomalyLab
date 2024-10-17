@@ -66,7 +66,7 @@ class Persistence(Empirical):
         self.panel_data.df = self.panel_data.df.sort_values(by=self.time)
 
         # Create lagged variable
-        self.panel_data = Shift(self.panel_data).shift(columns, periods).panel_data
+        panel_data = Shift(self.panel_data).shift(columns, periods).panel_data
 
         all_persistence = []
         for var in columns:
@@ -77,7 +77,7 @@ class Persistence(Empirical):
                 monthly_corrs = []
 
                 # Iterate over each month
-                for period, group in self.panel_data.df.groupby(self.time):
+                for period, group in panel_data.df.groupby(self.time):
                     # Drop NaN values
                     group = group.dropna(subset=[var, f"{var}({lag})"])
                     if not group.empty:

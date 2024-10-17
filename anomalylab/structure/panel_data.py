@@ -39,7 +39,7 @@ class PanelData(Data):
         self.fillna = False
         self.normalize = False
         self.shift = False
-        self.outliers: Literal["unprocessed", "winsorize", "truncate"] = "unprocessed"
+        self.outliers: Literal["Unprocessed", "Winsorized", "Truncated"] = "Unprocessed"
 
     def __repr__(self) -> str:
         return (
