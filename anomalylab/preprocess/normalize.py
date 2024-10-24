@@ -42,7 +42,15 @@ class NormalizeMethod:
         Returns:
             DataFrame: A new DataFrame containing the rescaled ranks.
         """
-        return 2 * (df.rank(method="average") - 1) / (len(df) - 1) - 1
+        # Rank the DataFrame with average method
+        ranked_df = df.rank(method="average")
+
+        # For each column, rescale the ranks based on the number of non-missing values
+        rescaled_df = ranked_df.transform(
+            lambda col: 2 * (col - 1) / (col.count() - 1) - 1
+        )
+
+        return rescaled_df
 
     @classmethod
     def call_method(cls, method: str, df: DataFrame) -> DataFrame:

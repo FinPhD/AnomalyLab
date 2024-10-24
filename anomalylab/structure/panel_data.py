@@ -44,11 +44,11 @@ class PanelData(Data):
     def __repr__(self) -> str:
         return (
             f"PanelData({self.name}), "  # todo: add frequency
-            f"classifications={self.classifications}, "
-            f"fillna={self.fillna}, "
-            f"normalize={self.normalize}, "
-            f"shift={self.shift}, "
-            f"outliers={self.outliers}"
+            f"Classifications={self.classifications}, "
+            f"Fillna={self.fillna}, "
+            f"Normalize={self.normalize}, "
+            f"Shift={self.shift}, "
+            f"Outliers={self.outliers}"
         )
 
     def _preprocess(self) -> None:

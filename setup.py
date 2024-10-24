@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="AnomalyLab",
-    version="0.1.4",
+    version="0.1.6",
     author="FinPhd",
     # author_email="your.email@example.com",
     description="A Python package for empirical asset pricing analysis.",
@@ -19,6 +19,9 @@ setup(
         "rich",
         "tqdm",
         "deprecated",
+        "openpyxl",
+        "seaborn",
+        "matplotlib",
     ],
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

@@ -1,6 +1,6 @@
 from anomalylab.config import *
 from anomalylab.empirical.empirical import Empirical
-from anomalylab.preprocess import Winsorize
+from anomalylab.preprocess import OutlierHandler
 from anomalylab.structure import PanelData
 from anomalylab.utils.imports import *
 from anomalylab.utils.utils import *
@@ -35,7 +35,7 @@ class FamaMacBethRegression(Empirical):
                     "Outliers have been processed, winsorization may not be necessary."
                 )
             self.temp_panel = (
-                Winsorize(panel_data=self.temp_panel)
+                OutlierHandler(panel_data=self.temp_panel)
                 .winsorize(
                     columns=exog,
                     process_all_characteristics=False,
