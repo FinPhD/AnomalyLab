@@ -9,7 +9,7 @@ from anomalylab.empirical import (
     PortfolioAnalysis,
     Summary,
 )
-from anomalylab.preprocess import FillNa, Normalize, Shift, Winsorize
+from anomalylab.preprocess import FillNa, Normalize, OutlierHandler, Shift
 from anomalylab.structure import PanelData, TimeSeries
 from anomalylab.utils import *
 from anomalylab.utils.imports import *
@@ -22,7 +22,7 @@ __all__: list[str] = [
     "TimeSeries",
     "FillNa",
     "Normalize",
-    "Winsorize",
+    "OutlierHandler",
     "Shift",
     "Summary",
     "Correlation",

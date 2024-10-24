@@ -177,16 +177,19 @@ class Persistence(Empirical):
             transition_matrix, columns=range(1, group + 1), index=range(1, group + 1)
         )
 
-        if draw:
-            # Plot heatmap of the transition matrix
+        if draw or path is not None:
             plt.figure(figsize=(10, 8))
             sns.heatmap(transition_matrix_df, annot=False, cmap="YlGnBu", cbar=True)
-            # plt.title("Transition Matrix Heatmap")
             plt.xlabel("Next Portfolio")
             plt.ylabel("Current Portfolio")
+
             if path is not None:
                 plt.savefig(path)
-            plt.show()
+
+            if draw:
+                plt.show()
+
+            plt.close()
 
         # Format the DataFrame values to the specified number of decimal places
         transition_matrix_df = transition_matrix_df.map(
@@ -211,7 +214,7 @@ if __name__ == "__main__":
             10,
             12,
             True,
-            str(resources.files("anomalylab.datasets")) + "/transition_matrix.png",
+            # str(resources.files("anomalylab.datasets")) + "/transition_matrix.png",
             3,
         )
     )

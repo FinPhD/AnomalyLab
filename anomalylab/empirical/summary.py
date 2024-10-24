@@ -9,39 +9,39 @@ class Statistics:
 
     @staticmethod
     def mean(series: Series) -> float:
-        return series.mean()
+        return series.mean() if not series.isna().all() else None
 
     @staticmethod
     def median(series: Series) -> float:
-        return series.median()
+        return series.median() if not series.isna().all() else None
 
     @staticmethod
     def std(series: Series) -> float:
-        return series.std()
+        return series.std() if not series.isna().all() else None
 
     @staticmethod
     def skew(series: Series):
-        return series.skew()
+        return series.skew() if not series.isna().all() else None
 
     @staticmethod
     def kurtosis(series: Series):
-        return series.kurtosis()
+        return series.kurtosis() if not series.isna().all() else None
 
     @staticmethod
     def min(series: Series):
-        return series.min()
+        return series.min() if not series.isna().all() else None
 
     @staticmethod
     def max(series: Series):
-        return series.max()
+        return series.max() if not series.isna().all() else None
 
     @staticmethod
     def count(series: Series) -> int:
-        return series.count()
+        return series.count() if not series.isna().all() else None
 
     @staticmethod
     def var(series: Series):
-        return series.var()
+        return series.var() if not series.isna().all() else None
 
 
 @dataclass

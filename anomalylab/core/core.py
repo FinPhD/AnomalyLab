@@ -10,7 +10,7 @@ from anomalylab.empirical import (
     PortfolioAnalysis,
     Summary,
 )
-from anomalylab.preprocess import FillNa, Normalize, Shift, Winsorize
+from anomalylab.preprocess import FillNa, Normalize, OutlierHandler, Shift
 from anomalylab.structure import PanelData, TimeSeries
 from anomalylab.utils import *
 from anomalylab.utils.imports import *
@@ -72,9 +72,9 @@ class Panel:
         return self._fillna_processor
 
     @property
-    def winsorize_processor(self) -> Winsorize:
+    def winsorize_processor(self) -> OutlierHandler:
         if self._winsorize_processor is None:
-            self._winsorize_processor = Winsorize(panel_data=self.panel_data)
+            self._winsorize_processor = OutlierHandler(panel_data=self.panel_data)
         return self._winsorize_processor
 
     @property
