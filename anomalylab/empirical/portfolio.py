@@ -677,6 +677,9 @@ if __name__ == "__main__":
         factors_series=time_series,
     )
 
+    group = portfolio.GroupN("Illiq", 10)
+    pp(group)
+
     uni_ew, uni_vw = portfolio.univariate_analysis("Illiq", 10)
     pp(uni_ew)
     pp(uni_vw)

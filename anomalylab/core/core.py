@@ -108,14 +108,13 @@ class Panel:
         models: Optional[dict[str, list[str]]] = None,
         factors_series: Optional[TimeSeries] = None,
     ) -> PortfolioAnalysis:
-        if self._portfolio_analysis_processor is None:
-            self._portfolio_analysis_processor = PortfolioAnalysis(
-                panel_data=self.panel_data,
-                endog=endog,
-                weight=weight,
-                models=models,
-                factors_series=factors_series,
-            )
+        self._portfolio_analysis_processor = PortfolioAnalysis(
+            panel_data=self.panel_data,
+            endog=endog,
+            weight=weight,
+            models=models,
+            factors_series=factors_series,
+        )
         return self._portfolio_analysis_processor
 
     @property
