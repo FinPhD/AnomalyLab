@@ -162,7 +162,7 @@ if __name__ == "__main__":
     norm.normalize(
         # columns="MktCap",
         method="zscore",
-        group_columns="time",
+        group_columns="date",
         # no_process_columns="MktCap",
     )
 

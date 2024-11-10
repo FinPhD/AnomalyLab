@@ -671,7 +671,7 @@ if __name__ == "__main__":
 
     portfolio = PortfolioAnalysis(
         panel,
-        endog="ret",
+        endog="return",
         weight="MktCap",
         models=Models,
         factors_series=time_series,

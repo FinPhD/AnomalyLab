@@ -175,7 +175,7 @@ class Panel:
         columns: Columns = None,
         method: Literal["winsorize", "truncate"] = "winsorize",
         limits: tuple[float, float] = (0.01, 0.01),
-        group_columns: list[str] | str = "time",
+        group_columns: Optional[list[str] | str] = None,
         no_process_columns: Columns = None,
         process_all_characteristics: bool = True,
     ) -> Panel:
@@ -371,14 +371,14 @@ if __name__ == "__main__":
     # panel.fillna(
     #     # columns="MktCap",
     #     # method="mean",
-    #     group_columns="time",
+    #     group_columns="date",
     #     # no_process_columns="MktCap",
     #     # process_all_characteristics=True,
     # )
     # panel.normalize(
     #     # columns="MktCap",
     #     # method="zscore",
-    #     # group_columns="time",
+    #     # group_columns="date",
     #     # no_process_columns="MktCap",
     #     # process_all_characteristics=False,
     # )
@@ -400,13 +400,13 @@ if __name__ == "__main__":
         )
     )
     uni_ew, uni_vw = panel.univariate_analysis(
-        "ret", "MktCap", "Illiq", 10, Models, time_series
+        "return", "MktCap", "Illiq", 10, Models, time_series
     )
     pp(uni_ew)
     pp(uni_vw)
 
     bi_ew, bi_vw = panel.bivariate_analysis(
-        "ret",
+        "return",
         "MktCap",
         "Illiq",
         "IdioVol",
@@ -424,10 +424,10 @@ if __name__ == "__main__":
     pp(
         panel.fm_reg(
             regs=[
-                ["ret", "MktCap"],
-                ["ret", "Illiq"],
-                ["ret", "IdioVol"],
-                ["ret", "MktCap", "Illiq", "IdioVol"],
+                ["return", "MktCap"],
+                ["return", "Illiq"],
+                ["return", "IdioVol"],
+                ["return", "MktCap", "Illiq", "IdioVol"],
             ],
             exog_order=["MktCap", "Illiq", "IdioVol"],
             weight="MktCap",

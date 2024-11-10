@@ -81,7 +81,7 @@ class FamaMacBethRegression(Empirical):
                     f"industry_weighed_method must be one of ['value', 'equal']"
                 )
             self.temp_panel.df[endog] -= self.temp_panel.df.groupby(
-                by=["time", industry]
+                by=[self.temp_panel.time, industry]
             )[endog].transform(func=func)
 
     def _reg(
@@ -102,16 +102,18 @@ class FamaMacBethRegression(Empirical):
         """
         dependent: str = list(reg.keys())[0]
         exogenous: list[str] = list(reg.values())[0]
-        df = df[["id", "time"] + exogenous + [dependent]].dropna()
+        df = df[
+            [self.temp_panel.id, self.temp_panel.time] + exogenous + [dependent]
+        ].dropna()
         # Exclude time periods with only one observation
-        df = df.groupby("time").filter(lambda x: len(x) > 1)
-        lag: int = math.ceil(4 * (df["time"].nunique() / 100) ** (4 / 25))
+        df = df.groupby(self.temp_panel.time).filter(lambda x: len(x) > 1)
+        lag: int = math.ceil(4 * (df[self.temp_panel.time].nunique() / 100) ** (4 / 25))
         if is_normalize:
-            df[exogenous] = df.groupby("time")[exogenous].transform(
+            df[exogenous] = df.groupby(self.temp_panel.time)[exogenous].transform(
                 func=lambda x: (x - x.mean()) / x.std()
             )
-        df["time"] = df["time"].dt.to_timestamp()
-        df = df.set_index(["id", "time"])
+        df[self.temp_panel.time] = df[self.temp_panel.time].dt.to_timestamp()
+        df = df.set_index([self.temp_panel.id, self.temp_panel.time])
         # Fama-MacBeth regression with Newey-West adjustment
         fmb = FamaMacBeth(
             dependent=df[dependent],
@@ -126,7 +128,7 @@ class FamaMacBethRegression(Empirical):
             mean_obs=str(int(fmb.time_info["mean"])),
             rsquared=(
                 df.reset_index(level=df.index.names[0], drop=True)
-                .groupby("time")
+                .groupby(self.temp_panel.time)
                 .apply(
                     func=partial(
                         self._cal_adjusted_r2,
@@ -313,21 +315,21 @@ if __name__ == "__main__":
 
     fm = FamaMacBethRegression(panel_data=panel)
     result = fm.fit(
-        # endog="ret",
+        # endog="return",
         # exog="MktCap",
         exog_order=["MktCap"],
         regs=[
-            "ret",
+            "return",
             "MktCap",
-            # ["ret", "Illiq"],
-            # ["ret", "IdioVol"],
-            # ["ret", "MktCap", "Illiq", "IdioVol"],
+            # ["return", "Illiq"],
+            # ["return", "IdioVol"],
+            # ["return", "MktCap", "Illiq", "IdioVol"],
         ],
         # models=[
-        #     {"ret": ["MktCap"]},
-        #     {"ret": ["Illiq"]},
-        #     {"ret": ["IdioVol"]},
-        #     {"ret": ["MktCap", "Illiq", "IdioVol"]},
+        #     {"return": ["MktCap"]},
+        #     {"return": ["Illiq"]},
+        #     {"return": ["IdioVol"]},
+        #     {"return": ["MktCap", "Illiq", "IdioVol"]},
         # ],
         industry="industry",
         industry_weighed_method="value",

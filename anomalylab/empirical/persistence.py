@@ -213,8 +213,8 @@ if __name__ == "__main__":
             "MktCap",
             10,
             12,
-            True,
-            # str(resources.files("anomalylab.datasets")) + "/transition_matrix.png",
-            3,
+            draw=True,
+            # path=str(resources.files("anomalylab.datasets")) + "/transition_matrix.png",
+            # decimal=3,
         )
     )

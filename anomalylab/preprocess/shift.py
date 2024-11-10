@@ -75,13 +75,15 @@ class Shift(Preprocessor):
             filter(lambda x: x != 0, [periods] if isinstance(periods, int) else periods)
         ):
             # Copy the columns to shift
-            df_shift: DataFrame = self.panel_data.df[["time", "id"] + columns].copy()
+            df_shift: DataFrame = self.panel_data.df[
+                [self.panel_data.time, self.panel_data.id] + columns
+            ].copy()
             # Shift the columns
-            df_shift["time"] += period
+            df_shift[self.panel_data.time] += period
             # Merge the shifted columns
             self.panel_data.df = self.panel_data.df.merge(
                 right=df_shift,
-                on=["time", "id"],
+                on=[self.panel_data.time, self.panel_data.id],
                 # If dropna is True, only keep the rows with matching 'time' and 'id'
                 how="inner" if dropna else "left",
                 suffixes=("", f"({period})"),
