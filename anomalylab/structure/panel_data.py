@@ -53,32 +53,23 @@ class PanelData(Data):
 
     def _preprocess(self) -> None:
         """
-        Preprocess the `DataFrame` by renaming columns and identifying firm characteristics.
+        Preprocess the `DataFrame` by identifying firm characteristics.
 
-        This method renames the `id`, `time`, and `ret` columns to standardized names
-        and identifies remaining columns as firm characteristics, excluding classifications.
+        This method identifies remaining columns as firm characteristics, excluding classifications.
         """
-        self.df = self.df.rename(
-            columns={
-                self.id: "id",
-                self.time: "time",
-                self.ret: "ret",
-            }
-        )
-        self.id, self.time, self.ret = "id", "time", "ret"
-        self.df["id"] = self.df["id"].astype(int)
+        self.df[self.id] = self.df[self.id].astype(int)
         # todo: add support for daily and yearly frequency
         if self.frequency != "M":
             raise NotImplementedError("Only monthly frequency is supported.")
-        self.df["time"] = pd.to_datetime(self.df["time"], format="ISO8601")
-        self.df["time"] = self.df["time"].dt.to_period(freq=self.frequency)
-        self.df = self.df.sort_values(by=["time", "id"])
+        self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
+        self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
+        self.df = self.df.sort_values(by=[self.time, self.id])
         # Identify remaining columns and set them as firm characteristics, excluding classifications
         self.firm_characteristics: set[str] = set(
             filter(
                 lambda x: (
                     x
-                    not in ["id", "time", "ret"]
+                    not in [self.id, self.time, self.ret]
                     + (
                         self.classifications
                         if isinstance(self.classifications, list)
@@ -211,10 +202,11 @@ if __name__ == "__main__":
     panel_data: PanelData = PanelData(
         df=df,
         name="Stocks",
-        # id="permno",
-        # time="date",
+        id="permno",
+        time="date",
         classifications="industry",
         drop_all_chars_missing=True,
     )
     pp(panel_data)
+    pp(panel_data.df)
     pp(panel_data.firm_characteristics)

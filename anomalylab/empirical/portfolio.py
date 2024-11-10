@@ -671,11 +671,14 @@ if __name__ == "__main__":
 
     portfolio = PortfolioAnalysis(
         panel,
-        endog="ret",
+        endog="return",
         weight="MktCap",
         models=Models,
         factors_series=time_series,
     )
+
+    group = portfolio.GroupN("Illiq", 10)
+    pp(group)
 
     uni_ew, uni_vw = portfolio.univariate_analysis("Illiq", 10)
     pp(uni_ew)

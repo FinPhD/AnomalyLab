@@ -96,7 +96,7 @@ class Summary(Empirical):
         )
 
         df: DataFrame = (
-            self.panel_data.df.groupby("time")[columns]
+            self.panel_data.df.groupby(self.panel_data.time)[columns]
             # Calculate the statistics for each column
             .agg(
                 func=[

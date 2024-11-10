@@ -133,7 +133,7 @@ class OutlierHandler(Preprocessor):
         columns: Columns = None,
         method: Literal["winsorize", "truncate"] = "winsorize",
         limits: tuple[float, float] = (0.01, 0.01),
-        group_columns: list[str] | str = "time",
+        group_columns: Optional[list[str] | str] = None,
         no_process_columns: Columns = None,
         process_all_characteristics: bool = True,
     ) -> OutlierHandler:
@@ -151,7 +151,7 @@ class OutlierHandler(Preprocessor):
             limits (tuple[float, float], optional): The limits for winsorization or truncation, defined as
                 quantiles. Defaults to (0.01, 0.01).
             group_columns (list[str] | str, optional): The columns to group by during the transformation.
-                Defaults to "time".
+                Defaults to None.
             no_process_columns (Columns, optional): The columns to exclude from processing. Defaults to None.
             process_all_characteristics (bool, optional): Whether to process all characteristics or not.
                 Defaults to True.
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         # columns="MktCap",
         method="winsorize",
         limits=(0.01, 0.01),
-        group_columns="time",
+        group_columns="date",
         # no_process_columns=["MktCap"],
     )
 

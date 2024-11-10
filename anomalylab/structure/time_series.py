@@ -34,16 +34,14 @@ class TimeSeries(Data):
 
         This method renames the time column to a standardized name and identifies remaining columns as factors.
         """
-        self.df = self.df.rename(columns={self.time: "time"})
-        self.time = "time"
         # todo: add support for daily and yearly frequency
         if self.frequency != "M":
             raise NotImplementedError("Only monthly frequency is supported.")
-        self.df["time"] = pd.to_datetime(self.df["time"], format="ISO8601")
-        self.df["time"] = self.df["time"].dt.to_period(freq=self.frequency)
-        self.df = self.df.sort_values(by="time")
+        self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
+        self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
+        self.df = self.df.sort_values(by=self.time)
         self.factors = list(self.df.columns)
-        self.factors.remove("time")
+        self.factors.remove(self.time)
 
     def _check_columns(self) -> None:
         """

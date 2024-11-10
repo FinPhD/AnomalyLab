@@ -233,7 +233,7 @@ if __name__ == "__main__":
     ).fillna(
         # columns="MktCap",
         method="mean",
-        group_columns=["time", "industry"],
+        group_columns=["date", "industry"],
         # no_process_columns="MktCap",
         # process_all_characteristics=True,
     )
