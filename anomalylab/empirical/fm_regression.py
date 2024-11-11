@@ -30,7 +30,7 @@ class FamaMacBethRegression(Empirical):
             UserWarning: If outliers have been processed and winsorization may not be necessary.
         """
         if is_winsorize:
-            if self.temp_panel.outliers != "unprocessed":
+            if self.temp_panel.outliers != "Unprocessed":
                 warnings.warn(
                     "Outliers have been processed, winsorization may not be necessary."
                 )
