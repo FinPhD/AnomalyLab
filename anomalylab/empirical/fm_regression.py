@@ -30,12 +30,12 @@ class FamaMacBethRegression(Empirical):
             UserWarning: If outliers have been processed and winsorization may not be necessary.
         """
         if is_winsorize:
-            if self.temp_panel.outliers != "Unprocessed":
+            if self.panel_data.outliers != "Unprocessed":
                 warnings.warn(
                     "Outliers have been processed, winsorization may not be necessary."
                 )
-            self.temp_panel = (
-                OutlierHandler(panel_data=self.temp_panel)
+            self.panel_data = (
+                OutlierHandler(panel_data=self.panel_data)
                 .winsorize(
                     columns=exog,
                     process_all_characteristics=False,
@@ -61,7 +61,7 @@ class FamaMacBethRegression(Empirical):
         Raises:
             ValueError: If the specified weighting method is not recognized or weight is missing for value weighting.
         """
-        self.temp_panel.check_columns_existence(
+        self.panel_data.check_columns_existence(
             columns=columns_to_list(columns=industry),
             check_range="all",
         )
@@ -74,14 +74,14 @@ class FamaMacBethRegression(Empirical):
                         "When calculating the value-weighted industry return, the weight column must be specified!"
                     )
                 func = lambda x: np.average(
-                    x, weights=self.temp_panel.df.loc[x.index, weight]
+                    x, weights=self.panel_data.df.loc[x.index, weight]
                 )
             else:
                 raise ValueError(
                     f"industry_weighed_method must be one of ['value', 'equal']"
                 )
-            self.temp_panel.df[endog] -= self.temp_panel.df.groupby(
-                by=[self.temp_panel.time, industry]
+            self.panel_data.df[endog] -= self.panel_data.df.groupby(
+                by=[self.time, industry]
             )[endog].transform(func=func)
 
     def _reg(
@@ -102,18 +102,16 @@ class FamaMacBethRegression(Empirical):
         """
         dependent: str = list(reg.keys())[0]
         exogenous: list[str] = list(reg.values())[0]
-        df = df[
-            [self.temp_panel.id, self.temp_panel.time] + exogenous + [dependent]
-        ].dropna()
+        df = df[[self.id, self.time] + exogenous + [dependent]].dropna()
         # Exclude time periods with only one observation
-        df = df.groupby(self.temp_panel.time).filter(lambda x: len(x) > 1)
-        lag: int = math.ceil(4 * (df[self.temp_panel.time].nunique() / 100) ** (4 / 25))
+        df = df.groupby(self.time).filter(lambda x: len(x) > 1)
+        lag: int = math.ceil(4 * (df[self.time].nunique() / 100) ** (4 / 25))
         if is_normalize:
-            df[exogenous] = df.groupby(self.temp_panel.time)[exogenous].transform(
+            df[exogenous] = df.groupby(self.time)[exogenous].transform(
                 func=lambda x: (x - x.mean()) / x.std()
             )
-        df[self.temp_panel.time] = df[self.temp_panel.time].dt.to_timestamp()
-        df = df.set_index([self.temp_panel.id, self.temp_panel.time])
+        df[self.time] = df[self.time].dt.to_timestamp()
+        df = df.set_index([self.id, self.time])
         # Fama-MacBeth regression with Newey-West adjustment
         fmb = FamaMacBeth(
             dependent=df[dependent],
@@ -128,7 +126,7 @@ class FamaMacBethRegression(Empirical):
             mean_obs=str(int(fmb.time_info["mean"])),
             rsquared=(
                 df.reset_index(level=df.index.names[0], drop=True)
-                .groupby(self.temp_panel.time)
+                .groupby(self.time)
                 .apply(
                     func=partial(
                         self._cal_adjusted_r2,
@@ -266,7 +264,7 @@ class FamaMacBethRegression(Empirical):
             DataFrame: DataFrame containing the regression results including parameters, t-values, and other statistics.
         """
         # Preparation
-        self.temp_panel: PanelData = self.panel_data.copy()
+        # self.temp_panel: PanelData = self.panel_data.copy()
         reg_models: RegModels = self._model_parse(
             regs=regs, endog=endog, exog=columns_to_list(exog)
         )
@@ -284,7 +282,7 @@ class FamaMacBethRegression(Empirical):
                 [
                     self._format(
                         reg_result=self._reg(
-                            df=self.temp_panel.df,
+                            df=self.panel_data.df,
                             reg=model,
                             is_normalize=is_normalize,
                         ),

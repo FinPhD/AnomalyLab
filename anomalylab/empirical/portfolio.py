@@ -40,9 +40,7 @@ class PortfolioAnalysis(Empirical):
         for field in ["endog", "weight"]:
             if getattr(self, field) is None:
                 raise ValueError(f"{field} must be provided")
-        self.ft_series = (
-            self.factors_series.df if self.factors_series is not None else None
-        )
+        self.ft_series = self.factors_series.df
         if self.models is not None and self.factors_series is None:
             raise ValueError(
                 "If 'models' is provided, 'factors_series' must also be provided!"
@@ -207,7 +205,13 @@ class PortfolioAnalysis(Empirical):
         if self.ft_series is not None:
             if self.models is not None:
                 factors_dict = {}
-                df = pd.merge(df, self.ft_series, on=self.time, how="left")
+                df = pd.merge(
+                    df,
+                    self.ft_series,
+                    left_on=self.time,
+                    right_on=self.factors_series.time,
+                    how="left",
+                )
                 for model, factors in self.models.items():
                     sub = df.dropna(subset=[self.time, self.endog] + factors)
                     T = sub[self.time].nunique()
