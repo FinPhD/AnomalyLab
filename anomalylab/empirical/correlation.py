@@ -53,7 +53,7 @@ class Correlation(Empirical):
 
         columns_number: int = len(columns)
         # Calculate the average correlation
-        df_group = self.panel_data.df.groupby(self.panel_data.time)[columns]
+        df_group = self.panel_data.df.groupby(self.time)[columns]
         merged_corr = np.ones(
             (columns_number, columns_number)
         )  # Initialize a matrix for correlations
