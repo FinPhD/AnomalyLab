@@ -126,8 +126,6 @@ class OutlierHandler(Preprocessor):
         panel_data (PanelData): The panel data object containing the data to be processed.
     """
 
-    panel_data: PanelData
-
     def winsorize(
         self,
         columns: Columns = None,
