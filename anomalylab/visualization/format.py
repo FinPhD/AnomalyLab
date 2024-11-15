@@ -53,13 +53,9 @@ class FormatExcel:
                     cell.border = Border()
 
             max_row = ws.max_row
-            max_col = ws.max_column
 
             for cell in ws[1]:
-                cell.border = Border(top=thin)
-
-            for cell in ws[1]:
-                cell.border = Border(bottom=thin)
+                cell.border = Border(top=thin, bottom=thin)
 
             for cell in ws[max_row]:
                 cell.border = Border(bottom=thin)

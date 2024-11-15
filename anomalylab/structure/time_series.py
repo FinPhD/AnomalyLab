@@ -34,9 +34,6 @@ class TimeSeries(Data):
 
         This method renames the time column to a standardized name and identifies remaining columns as factors.
         """
-        # todo: add support for daily and yearly frequency
-        if self.frequency != "M":
-            raise NotImplementedError("Only monthly frequency is supported.")
         self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
         self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
         self.df = self.df.sort_values(by=self.time)

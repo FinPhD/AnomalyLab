@@ -56,8 +56,15 @@ class Shift(Preprocessor):
             Shift: The instance of the Shift class with updated state.
 
         Raises:
-            ValueError: If the data has already been shifted.
+            NotImplementedError: Only monthly frequency is supported.
+            warnings: The data has already been shifted.
+
         """
+
+        # todo: add support for daily and yearly frequency
+        if self.panel_data.frequency != "M":
+            raise NotImplementedError("Only monthly frequency is supported.")
+
         # Check if the data has already been shifted
         if self.panel_data.shift:
             # raise ValueError("The data has already been shifted.")
@@ -76,14 +83,14 @@ class Shift(Preprocessor):
         ):
             # Copy the columns to shift
             df_shift: DataFrame = self.panel_data.df[
-                [self.panel_data.time, self.panel_data.id] + columns
+                [self.time, self.id] + columns
             ].copy()
             # Shift the columns
-            df_shift[self.panel_data.time] += period
+            df_shift[self.time] += period
             # Merge the shifted columns
             self.panel_data.df = self.panel_data.df.merge(
                 right=df_shift,
-                on=[self.panel_data.time, self.panel_data.id],
+                on=[self.time, self.id],
                 # If dropna is True, only keep the rows with matching 'time' and 'id'
                 how="inner" if dropna else "left",
                 suffixes=("", f"({period})"),

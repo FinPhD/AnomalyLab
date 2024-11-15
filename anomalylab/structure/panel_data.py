@@ -58,9 +58,6 @@ class PanelData(Data):
         This method identifies remaining columns as firm characteristics, excluding classifications.
         """
         self.df[self.id] = self.df[self.id].astype(int)
-        # todo: add support for daily and yearly frequency
-        if self.frequency != "M":
-            raise NotImplementedError("Only monthly frequency is supported.")
         self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
         self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
         self.df = self.df.sort_values(by=[self.time, self.id])
