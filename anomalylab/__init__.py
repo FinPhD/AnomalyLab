@@ -13,6 +13,7 @@ from anomalylab.preprocess import FillNa, Normalize, OutlierHandler, Shift
 from anomalylab.structure import PanelData, TimeSeries
 from anomalylab.utils import *
 from anomalylab.utils.imports import *
+from anomalylab.visualization import FormatExcel
 
 __all__: list[str] = [
     "pp",
@@ -29,4 +30,5 @@ __all__: list[str] = [
     "FamaMacBethRegression",
     "Persistence",
     "PortfolioAnalysis",
+    "FormatExcel",
 ]
