@@ -40,11 +40,11 @@ class PortfolioAnalysis(Empirical):
         for field in ["endog", "weight"]:
             if getattr(self, field) is None:
                 raise ValueError(f"{field} must be provided")
-        self.ft_series = self.factors_series.df
         if self.models is not None and self.factors_series is None:
             raise ValueError(
                 "If 'models' is provided, 'factors_series' must also be provided!"
             )
+        self.ft_series = getattr(self.factors_series, "df", None)
 
     def add_star(self, mean_val: float, p_val: float) -> str:
         """Add significance stars to mean values based on p-value thresholds.
@@ -677,8 +677,8 @@ if __name__ == "__main__":
         panel,
         endog="return",
         weight="MktCap",
-        models=Models,
-        factors_series=time_series,
+        # models=Models,
+        # factors_series=time_series,
     )
 
     group = portfolio.GroupN("Illiq", 10)
