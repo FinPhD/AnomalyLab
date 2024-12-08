@@ -38,7 +38,8 @@ class FamaMacBethRegression(Empirical):
                 OutlierHandler(panel_data=self.panel_data)
                 .winsorize(
                     columns=exog,
-                    process_all_characteristics=False,
+                    method="winsorize",
+                    group_columns=self.panel_data.time,
                 )
                 .panel_data
             )
@@ -317,10 +318,10 @@ if __name__ == "__main__":
         # exog="MktCap",
         exog_order=["MktCap"],
         regs=[
-            "return",
-            "MktCap",
-            # ["return", "Illiq"],
-            # ["return", "IdioVol"],
+            # "return",
+            # "MktCap",
+            ["return", "Illiq"],
+            ["return", "IdioVol"],
             # ["return", "MktCap", "Illiq", "IdioVol"],
         ],
         # models=[
@@ -332,7 +333,7 @@ if __name__ == "__main__":
         industry="industry",
         industry_weighed_method="value",
         weight="MktCap",
-        # is_winsorize=True,
+        is_winsorize=True,
         is_normalize=True,
         # decimal=2,
     )

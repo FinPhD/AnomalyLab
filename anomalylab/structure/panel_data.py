@@ -61,12 +61,15 @@ class PanelData(Data):
         self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
         self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
         self.df = self.df.sort_values(by=[self.time, self.id])
+        basic_column = (
+            [self.id, self.time] if self.ret is None else [self.id, self.time, self.ret]
+        )
         # Identify remaining columns and set them as firm characteristics, excluding classifications
         self.firm_characteristics: set[str] = set(
             filter(
                 lambda x: (
                     x
-                    not in [self.id, self.time, self.ret]
+                    not in basic_column
                     + (
                         self.classifications
                         if isinstance(self.classifications, list)
@@ -111,9 +114,10 @@ class PanelData(Data):
         if isinstance(self.classifications, str):
             self.classifications = [self.classifications]
         # Check if the required columns are present in the DataFrame
-        required_columns: set[str] = set(
-            [self.id, self.time, self.ret] + (self.classifications or [])
+        basic_column = (
+            [self.id, self.time] if self.ret is None else [self.id, self.time, self.ret]
         )
+        required_columns: set[str] = set(basic_column + (self.classifications or []))
         missing_columns: set[str] = required_columns - set(self.df.columns)
         if missing_columns:
             raise ValueError(f"Missing columns in the DataFrame: {missing_columns}")
@@ -201,6 +205,7 @@ if __name__ == "__main__":
         name="Stocks",
         id="permno",
         time="date",
+        ret="return",
         classifications="industry",
         drop_all_chars_missing=True,
     )
