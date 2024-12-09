@@ -19,7 +19,7 @@ from anomalylab.visualization import FormatExcel
 
 @dataclass
 class Panel:
-    df: DataFrame
+    _df: pd.DataFrame = field(repr=False)
     name: Optional[str] = None
     id: str = "permno"
     time: str = "date"
@@ -30,7 +30,7 @@ class Panel:
 
     def __post_init__(self) -> None:
         self.panel_data: PanelData = PanelData(
-            df=self.df,
+            df=self._df,
             name=self.name,
             id=self.id,
             time=self.time,
@@ -54,9 +54,9 @@ class Panel:
         return repr(self.panel_data)
 
     def get_original_data(self) -> DataFrame:
-        return self.df
+        return self._df
 
-    def get_data(self) -> DataFrame:
+    def get_processed_data(self) -> DataFrame:
         return self.panel_data.df
 
     @property
@@ -331,6 +331,7 @@ class Panel:
         is_winsorize: bool = False,
         is_normalize: bool = False,
         decimal: Optional[int] = None,
+        return_intermediate: bool = False,
     ) -> DataFrame:
         return self.fm_preprocessor.fit(
             endog=endog,
@@ -344,6 +345,7 @@ class Panel:
             is_winsorize=is_winsorize,
             is_normalize=is_normalize,
             decimal=decimal,
+            return_intermediate=return_intermediate,
         )
 
     def format_excel(self, path: str) -> None:

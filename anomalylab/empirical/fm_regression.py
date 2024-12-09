@@ -11,12 +11,12 @@ from anomalylab.utils.utils import RegModels, RegResult
 class FamaMacBethRegression(Empirical):
     """Class for performing Fama-MacBeth regression analysis.
 
-    Inherits from the Empirical class and provides methods for
-    winsorizing, calculating industry-weighted returns, fitting
-    the regression model, and formatting the output results.
+    This class inherits from the Empirical class and provides methods to
+    winsorize data, calculate industry-weighted returns, fit the Fama-MacBeth
+    regression model, and format the output results.
 
     Attributes:
-        temp_panel (PanelData): Temporary panel data used for analysis.
+        panel_data (PanelData): Panel data used for analysis.
     """
 
     def _winsorize(self, is_winsorize: bool, exog: list[str]):
@@ -52,6 +52,9 @@ class FamaMacBethRegression(Empirical):
         weight: Optional[str] = None,
     ) -> None:
         """Calculates industry-weighted returns for the specified endogenous variables.
+
+        This method adjusts the endogenous variables by industry-specific returns,
+        either using equal weights or value weights (based on the 'industry_weighed_method').
 
         Args:
             endog (list[str]): List of endogenous variable names to adjust.
@@ -90,8 +93,13 @@ class FamaMacBethRegression(Empirical):
         df: DataFrame,
         reg: RegModel,
         is_normalize: bool,
+        return_intermediate: bool = False,
     ) -> RegResult:
         """Performs Fama-MacBeth regression on the provided DataFrame.
+
+        This method runs the Fama-MacBeth two-step regression on a given dataset.
+        It can optionally normalize the exogenous variables and return intermediate
+        results for each time period.
 
         Args:
             df (DataFrame): DataFrame containing the data for regression.
@@ -113,6 +121,23 @@ class FamaMacBethRegression(Empirical):
             )
         df[self.time] = df[self.time].dt.to_timestamp()
         df = df.set_index([self.id, self.time])
+
+        if return_intermediate:
+            coef_df = []
+            for time, group in df.groupby(self.time):
+                y = group[dependent]
+                X = sm.add_constant(group[exogenous])  # Add constant term
+                model = sm.OLS(y, X)
+                results = model.fit()
+                coefs = results.params
+                coefs[self.time] = time
+                coef_df.append(coefs)
+            coef_df = pd.DataFrame(coef_df)
+            coef_df = coef_df[
+                [self.time] + [col for col in coef_df.columns if col != self.time]
+            ]
+            return pd.DataFrame(coef_df)
+
         # Fama-MacBeth regression with Newey-West adjustment
         fmb = FamaMacBeth(
             dependent=df[dependent],
@@ -142,6 +167,9 @@ class FamaMacBethRegression(Empirical):
     def _cal_adjusted_r2(self, group, dependent: str, exogenous: list[str]):
         """Calculates the adjusted R² for the given group of data.
 
+        This method fits an OLS model to the provided group of data and computes
+        the adjusted R².
+
         Args:
             group: DataFrame group to fit the OLS model.
             dependent (str): Name of the dependent variable.
@@ -168,6 +196,9 @@ class FamaMacBethRegression(Empirical):
         exog_order: list[str],
     ) -> Series:
         """Formats the regression results into a Pandas Series.
+
+        This method prepares the output of the regression results, rounding values
+        to the specified decimal places and adding significance stars.
 
         Args:
             reg_result (RegResult): Results of the regression.
@@ -202,6 +233,9 @@ class FamaMacBethRegression(Empirical):
         exog: Optional[list[str]],
     ) -> RegModels:
         """Parses the model specifications into a RegModels object.
+
+        This method parses the model specifications and converts them into a `RegModels` object.
+        It supports input in multiple formats, including lists and dictionaries.
 
         Args:
             regs (Optional[list[list[str] | dict[str, list[str]]] | list | dict]): Model specifications.
@@ -245,8 +279,13 @@ class FamaMacBethRegression(Empirical):
         is_winsorize: bool = False,
         is_normalize: bool = False,
         decimal: Optional[int] = None,
+        return_intermediate: bool = False,  # New parameter to control whether intermediate results are returned
     ) -> DataFrame:
-        """Fits the Fama-MacBeth regression model and returns the results DataFrame.
+        """Fits the Fama-MacBeth regression model and returns the results DataFrame or intermediate results.
+
+        This method fits the Fama-MacBeth regression model, processes data
+        (including winsorization, industry weighting, normalization), and
+        returns either the final regression results or intermediate results.
 
         Args:
             endog (Optional[str]): Name of the dependent variable.
@@ -260,12 +299,12 @@ class FamaMacBethRegression(Empirical):
             is_winsorize (bool): Indicates whether to apply winsorization.
             is_normalize (bool): Indicates whether to normalize exogenous variables.
             decimal (Optional[int]): Number of decimal places for rounding in output.
+            return_intermediate (bool): If True, returns the intermediate results (e.g., coefficients for each time period).
 
         Returns:
-            DataFrame: DataFrame containing the regression results including parameters, t-values, and other statistics.
+            DataFrame: DataFrame containing the regression results or intermediate results based on `return_intermediate`.
         """
         # Preparation
-        # self.temp_panel: PanelData = self.panel_data.copy()
         reg_models: RegModels = self._model_parse(
             regs=regs, endog=endog, exog=columns_to_list(exog)
         )
@@ -277,6 +316,19 @@ class FamaMacBethRegression(Empirical):
             weight=weight,
         )
         exog_order = (exog_order or reg_models.exogenous) + ["const"]
+
+        if return_intermediate:
+            intermediate_results = [
+                self._reg(
+                    df=self.panel_data.df,
+                    reg=model,
+                    is_normalize=is_normalize,
+                    return_intermediate=True,
+                )
+                for model in reg_models.models
+            ]
+            return intermediate_results
+
         # Regression
         df: DataFrame = (
             pd.concat(
@@ -316,13 +368,13 @@ if __name__ == "__main__":
     result = fm.fit(
         # endog="return",
         # exog="MktCap",
-        exog_order=["MktCap"],
+        # exog_order=["MktCap", "Illiq", "IdioVol"],
         regs=[
             # "return",
             # "MktCap",
             ["return", "Illiq"],
             ["return", "IdioVol"],
-            # ["return", "MktCap", "Illiq", "IdioVol"],
+            ["return", "MktCap", "Illiq", "IdioVol"],
         ],
         # models=[
         #     {"return": ["MktCap"]},
@@ -330,11 +382,13 @@ if __name__ == "__main__":
         #     {"return": ["IdioVol"]},
         #     {"return": ["MktCap", "Illiq", "IdioVol"]},
         # ],
-        industry="industry",
-        industry_weighed_method="value",
-        weight="MktCap",
+        # industry="industry",
+        # industry_weighed_method="value",
+        # weight="MktCap",
         is_winsorize=True,
         is_normalize=True,
+        return_intermediate=True,
         # decimal=2,
     )
-    pp(object=result)
+    pp(result)
+    pp(result[0])
