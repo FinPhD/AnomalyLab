@@ -267,6 +267,7 @@ class PortfolioAnalysis(Empirical):
         core_g: int,
         format: bool = False,
         decimal: Optional[int] = None,
+        factor_return: bool = False,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -279,6 +280,7 @@ class PortfolioAnalysis(Empirical):
             core_g (int): The group number for portfolio grouping of the core variable.
             format (bool): Whether to format the output for display. Defaults to False.
             decimal (Optional[int]): The number of decimal places for formatting. Defaults to None.
+            factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -331,6 +333,9 @@ class PortfolioAnalysis(Empirical):
             .apply(process_group)
             .reset_index(level=0, drop=True)
         )
+
+        if factor_return:
+            return ew_ret_d, vw_ret_d
 
         def generate_time_series_dict(series: Series) -> dict:
             """Generate a dictionary of time series data from the DataFrame.
@@ -422,6 +427,7 @@ class PortfolioAnalysis(Empirical):
         format: bool = False,
         type: str = "dependent",
         decimal: Optional[int] = None,
+        factor_return: bool = False,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -438,6 +444,7 @@ class PortfolioAnalysis(Empirical):
             format (bool): Whether to format the output for display. Defaults to False.
             type (str): Type of grouping, can be 'dependent' or 'independent'. Defaults to 'dependent'.
             decimal (Optional[int]): The number of decimal places to round to. Defaults to None.
+            factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -518,6 +525,9 @@ class PortfolioAnalysis(Empirical):
             .apply(process_group)
             .reset_index(level=0, drop=True)
         )
+
+        if factor_return:
+            return ew_ret_d, vw_ret_d
 
         def generate_time_series_dict(df: pd.DataFrame) -> dict:
             """Generate a dictionary of time series data from the DataFrame.
@@ -677,19 +687,19 @@ if __name__ == "__main__":
         panel,
         endog="return",
         weight="MktCap",
-        # models=Models,
-        # factors_series=time_series,
+        models=Models,
+        factors_series=time_series,
     )
 
     group = portfolio.GroupN("Illiq", 10)
     pp(group)
 
-    uni_ew, uni_vw = portfolio.univariate_analysis("Illiq", 10)
+    uni_ew, uni_vw = portfolio.univariate_analysis("Illiq", 10, factor_return=False)
     pp(uni_ew)
     pp(uni_vw)
 
     bi_ew, bi_vw = portfolio.bivariate_analysis(
-        "Illiq", "IdioVol", 10, 10, True, False, "dependent"
+        "Illiq", "IdioVol", 10, 10, False, False, "dependent", factor_return=False
     )
     pp(bi_ew)
     pp(bi_vw)

@@ -20,7 +20,7 @@ class PanelData(Data):
         frequency (Literal["D", "M", "Y"]):
             The frequency of the data. Defaults to "M".
         ret (str):
-            The column name for the excess return. Defaults to "return".
+            The column name for the excess return. Defaults to None.
         classifications (list[str]):
             The list of classification columns.
         drop_all_chars_missing (bool):
@@ -30,7 +30,7 @@ class PanelData(Data):
     id: str = "permno"
     time: str = "date"
     frequency: Literal["D", "M", "Y"] = "M"
-    ret: str = "return"
+    ret: Optional[str] = None
     classifications: Optional[list[str] | str] = None
     drop_all_chars_missing: bool = False
 

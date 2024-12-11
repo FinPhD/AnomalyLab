@@ -4,7 +4,6 @@ from anomalylab.preprocess import OutlierHandler
 from anomalylab.structure import PanelData
 from anomalylab.utils.imports import *
 from anomalylab.utils.utils import *
-from anomalylab.utils.utils import RegModels, RegResult
 
 
 @dataclass

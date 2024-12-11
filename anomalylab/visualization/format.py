@@ -60,30 +60,66 @@ class FormatExcel:
             for cell in ws[max_row]:
                 cell.border = Border(bottom=thin)
 
+    def convert_brackets(self, direction="to_square"):
+        """Converts parentheses () to square brackets [] and vice versa in the Excel cells.
+
+        This method goes through all the cells in the workbook and:
+        - Converts () to [] if direction is 'to_square'.
+        - Converts [] to () if direction is 'to_round'.
+
+        Args:
+            direction (str): Direction of the bracket conversion.
+                            - 'to_square' for converting () to [].
+                            - 'to_round' for converting [] to ().
+                            Default is 'to_square'.
+        """
+        # Validate the direction parameter
+        if direction not in ["to_square", "to_round"]:
+            raise ValueError(
+                "Invalid direction. Choose either 'to_square' or 'to_round'."
+            )
+
+        for ws in self.wb.worksheets:
+            for row in ws.iter_rows(
+                min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column
+            ):
+                for cell in row:
+                    if isinstance(
+                        cell.value, str
+                    ):  # Check if the cell contains a string
+                        if direction == "to_square":
+                            cell.value = cell.value.replace("(", "[").replace(")", "]")
+                        elif direction == "to_round":
+                            cell.value = cell.value.replace("[", "(").replace("]", ")")
+
     def save(self):
         """Saves the currently loaded workbook to its file path."""
         self.wb.save(self.file_path)
 
-    def process(self):
+    def process(self, align=True, line=True, convert_brackets=False):
         """Processes and formats Excel files.
 
         - If the provided path is a directory, it formats all Excel files in that directory.
         - If the provided path is a file, it formats that specific Excel file.
         """
-        if os.path.isdir(self.path):
-            for file in glob(os.path.join(self.path, "*.xlsx")):
-                self.load_workbook(file)
+        files_to_process = (
+            glob(os.path.join(self.path, "*.xlsx"))
+            if os.path.isdir(self.path)
+            else [self.path]
+        )
+
+        for file in files_to_process:
+            self.load_workbook(file)
+            if align:
                 self.align()
+            if line:
                 self.line()
-                self.save()
-        else:
-            self.load_workbook(self.path)
-            self.align()
-            self.line()
+            if convert_brackets:
+                self.convert_brackets()
             self.save()
 
 
 if __name__ == "__main__":
     path = "..."
     excel_formatter = FormatExcel(path)
-    excel_formatter.process()
+    excel_formatter.process(convert_brackets=True)

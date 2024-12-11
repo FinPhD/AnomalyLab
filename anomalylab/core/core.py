@@ -27,6 +27,7 @@ class Panel:
     ret: str = "return"
     classifications: Optional[list[str] | str] = None
     drop_all_chars_missing: bool = False
+    is_copy: bool = False
 
     def __post_init__(self) -> None:
         self.panel_data: PanelData = PanelData(
@@ -38,6 +39,7 @@ class Panel:
             ret=self.ret,
             classifications=self.classifications,
             drop_all_chars_missing=self.drop_all_chars_missing,
+            is_copy=self.is_copy,
         )
         self._normalize_processor = None
         self._fillna_processor = None
@@ -280,6 +282,7 @@ class Panel:
         factors_series: Optional[TimeSeries] = None,
         format: bool = False,
         decimal: Optional[int] = None,
+        factor_return: bool = False,
     ) -> tuple:
         return self.portfolio_analysis_processor(
             endog=endog, weight=weight, models=models, factors_series=factors_series
@@ -288,6 +291,7 @@ class Panel:
             core_g=core_g,
             format=format,
             decimal=decimal,
+            factor_return=factor_return,
         )
 
     def bivariate_analysis(
@@ -304,6 +308,7 @@ class Panel:
         format: bool = False,
         type: str = "dependent",
         decimal: Optional[int] = None,
+        factor_return: bool = False,
     ) -> tuple:
         return self.portfolio_analysis_processor(
             endog=endog, weight=weight, models=models, factors_series=factors_series
@@ -316,6 +321,7 @@ class Panel:
             format=format,
             type=type,
             decimal=decimal,
+            factor_return=factor_return,
         )
 
     def fm_reg(
@@ -348,8 +354,12 @@ class Panel:
             return_intermediate=return_intermediate,
         )
 
-    def format_excel(self, path: str) -> None:
-        self.format_preprocessor(path=path).process()
+    def format_excel(
+        self, path: str, align=True, line=True, convert_brackets=False
+    ) -> None:
+        self.format_preprocessor(path=path).process(
+            align=align, line=line, convert_brackets=convert_brackets
+        )
 
 
 if __name__ == "__main__":
@@ -364,7 +374,11 @@ if __name__ == "__main__":
     }
 
     panel = Panel(
-        df, name="Stocks", classifications="industry", drop_all_chars_missing=True
+        df,
+        name="Stocks",
+        classifications="industry",
+        drop_all_chars_missing=True,
+        is_copy=False,
     )
     time_series: TimeSeries = TimeSeries(df=ts, name="Factor Series")
     pp(panel)
@@ -402,7 +416,7 @@ if __name__ == "__main__":
         )
     )
     uni_ew, uni_vw = panel.univariate_analysis(
-        "return", "MktCap", "Illiq", 10, Models, time_series
+        "return", "MktCap", "Illiq", 10, Models, time_series, factor_return=True
     )
     pp(uni_ew)
     pp(uni_vw)
@@ -419,6 +433,7 @@ if __name__ == "__main__":
         True,
         False,
         "dependent",
+        factor_return=True,
     )
     pp(bi_ew)
     pp(bi_vw)
