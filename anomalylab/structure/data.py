@@ -13,6 +13,7 @@ class Data(ABC):
 
     df: DataFrame
     name: Optional[str] = None
+    is_copy: bool = False
 
     def __post_init__(self) -> None:
         """
@@ -21,18 +22,12 @@ class Data(ABC):
         1. Check if the columns are valid.
         2. Preprocess the data.
         3. Set the flag if needed.
-        4. Call the other_init method if needed.
         """
-        if self.name is None:
-            self.name = "anomaly"
+        if self.is_copy:
+            self.df = copy.deepcopy(self.df)
         self._check_columns()
         self._preprocess()
         self.set_flag()
-        self.other_init()
-
-    def other_init(self) -> None:
-        """This method is a placeholder for additional initialization logic."""
-        pass
 
     def set_flag(self) -> None:
         """This method is meant to be overridden by subclasses to set flags."""

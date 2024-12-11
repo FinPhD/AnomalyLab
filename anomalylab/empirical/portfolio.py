@@ -280,6 +280,7 @@ class PortfolioAnalysis(Empirical):
             core_g (int): The group number for portfolio grouping of the core variable.
             format (bool): Whether to format the output for display. Defaults to False.
             decimal (Optional[int]): The number of decimal places for formatting. Defaults to None.
+            factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -443,6 +444,7 @@ class PortfolioAnalysis(Empirical):
             format (bool): Whether to format the output for display. Defaults to False.
             type (str): Type of grouping, can be 'dependent' or 'independent'. Defaults to 'dependent'.
             decimal (Optional[int]): The number of decimal places to round to. Defaults to None.
+            factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.

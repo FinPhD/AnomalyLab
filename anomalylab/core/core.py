@@ -27,6 +27,7 @@ class Panel:
     ret: str = "return"
     classifications: Optional[list[str] | str] = None
     drop_all_chars_missing: bool = False
+    is_copy: bool = False
 
     def __post_init__(self) -> None:
         self.panel_data: PanelData = PanelData(
@@ -38,6 +39,7 @@ class Panel:
             ret=self.ret,
             classifications=self.classifications,
             drop_all_chars_missing=self.drop_all_chars_missing,
+            is_copy=self.is_copy,
         )
         self._normalize_processor = None
         self._fillna_processor = None
@@ -372,7 +374,11 @@ if __name__ == "__main__":
     }
 
     panel = Panel(
-        df, name="Stocks", classifications="industry", drop_all_chars_missing=True
+        df,
+        name="Stocks",
+        classifications="industry",
+        drop_all_chars_missing=True,
+        is_copy=False,
     )
     time_series: TimeSeries = TimeSeries(df=ts, name="Factor Series")
     pp(panel)
