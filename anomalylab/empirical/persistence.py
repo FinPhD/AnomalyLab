@@ -29,7 +29,7 @@ class Persistence(Empirical):
         no_process_columns: Columns = None,
         process_all_characteristics: bool = True,
         decimal: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> DataFrame:
         """
         Computes average persistence (autocorrelation) for specified columns over defined time periods.
 
@@ -48,7 +48,7 @@ class Persistence(Empirical):
                 Defaults to None.
 
         Returns:
-            pd.DataFrame: A DataFrame containing the average persistence for specified columns.
+            DataFrame: A DataFrame containing the average persistence for specified columns.
 
         Note:
             The resulting DataFrame contains the average correlations for each lag, formatted to the
@@ -90,7 +90,7 @@ class Persistence(Empirical):
                 all_monthly_corrs.extend(monthly_corrs)
 
             # Convert to DataFrame
-            all_monthly_corrs_df = pd.DataFrame(all_monthly_corrs)
+            all_monthly_corrs_df = DataFrame(all_monthly_corrs)
 
             # Calculate average monthly correlations
             mean_corrs_df = (
@@ -116,7 +116,7 @@ class Persistence(Empirical):
         draw: bool = False,
         path: Optional[str] = None,
         decimal: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> DataFrame:
         """Calculate the transition matrix for a specified variable and lag.
 
         This method computes the transition matrix that shows how groups change over time based on
@@ -173,7 +173,7 @@ class Persistence(Empirical):
         )
 
         # Create DataFrame for the transition matrix
-        transition_matrix_df = pd.DataFrame(
+        transition_matrix_df = DataFrame(
             transition_matrix, columns=range(1, group + 1), index=range(1, group + 1)
         )
 

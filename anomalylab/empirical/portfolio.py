@@ -69,8 +69,8 @@ class PortfolioAnalysis(Empirical):
         self,
         vars: Union[str, list[str]],
         groups: Union[int, list[int]],
-        type: Optional[str] = None,
-    ) -> pd.DataFrame:
+        sort_type: Optional[str] = None,
+    ) -> DataFrame:
         """Group variables into portfolios based on specified groups.
 
         This method creates portfolios for the specified variables in the panel data.
@@ -78,7 +78,7 @@ class PortfolioAnalysis(Empirical):
         Args:
             vars (list of str): List of variables to group.
             groups (list of int): List of integers defining the number of groups for each variable.
-            type (str, optional): Type of grouping, can be 'dependent' to adjust based on the previous variable.
+            sort_type (str, optional): Type of sorting, can be 'dependent' to adjust based on the previous variable.
 
         Returns:
             DataFrame: A DataFrame with new columns for grouped variables.
@@ -105,7 +105,7 @@ class PortfolioAnalysis(Empirical):
         # Adjust group definitions
         group_col = [self.time]
         for i, var in enumerate(vars):
-            if type == "dependent" and i > 0:
+            if sort_type == "dependent" and i > 0:
                 group_col.append(f"{vars[i-1]}_g{groups[i-1]}")
                 # Grouping dependent on the previous variable
                 out_df[f"{var}_g{groups[i]}"] = (
@@ -142,7 +142,7 @@ class PortfolioAnalysis(Empirical):
 
         return out_df
 
-    def _claculate_value(self, df: pd.DataFrame, decimal: Optional[int] = None) -> dict:
+    def _claculate_value(self, df: DataFrame, decimal: Optional[int] = None) -> dict:
         """Calculate various portfolio performance metrics.
 
         This method computes mean returns, t-values, Sharpe ratios, and model-adjusted alpha and t values.
@@ -159,7 +159,7 @@ class PortfolioAnalysis(Empirical):
 
         return {**stat_dict, **factors_dict, **sharpe_dict}
 
-    def _calculate_mean_and_t_value(self, df: pd.DataFrame) -> dict:
+    def _calculate_mean_and_t_value(self, df: DataFrame) -> dict:
         """Calculate mean and t-value for the dependent variable.
 
         This method computes the mean return and its t-value assuming the null hypothesis
@@ -176,7 +176,7 @@ class PortfolioAnalysis(Empirical):
         lag = math.ceil(4 * (T / 100) ** (4 / 25))
 
         Y = df[self.endog].values
-        X = pd.DataFrame({"constant": [1] * len(df[self.endog])}).values
+        X = DataFrame({"constant": [1] * len(df[self.endog])}).values
         reg = sm.OLS(Y, X).fit(
             cov_type="HAC", cov_kwds={"maxlags": lag, "use_correction": False}
         )
@@ -190,7 +190,7 @@ class PortfolioAnalysis(Empirical):
 
         return stat_dict
 
-    def _calculate_alpha_and_t_value(self, df: pd.DataFrame) -> dict:
+    def _calculate_alpha_and_t_value(self, df: DataFrame) -> dict:
         """Calculate alpha and t-value for specified models.
 
         This method computes alpha values and their t-statistics for various regression models
@@ -239,7 +239,7 @@ class PortfolioAnalysis(Empirical):
         else:
             return {}
 
-    def _calculate_sharpe(self, df: pd.DataFrame, decimal: Optional[int] = 0) -> dict:
+    def _calculate_sharpe(self, df: DataFrame, decimal: Optional[int] = 0) -> dict:
         """Calculate the Sharpe ratio for the dependent variable.
 
         This method computes the annualized Sharpe ratio based on the mean and standard deviation
@@ -300,7 +300,7 @@ class PortfolioAnalysis(Empirical):
         )  # type: ignore
         vw_ret_d.index.names = [self.time, core_var]
 
-        def process_group(group: pd.DataFrame) -> pd.DataFrame:
+        def process_group(group: DataFrame) -> Series:
             """Process each group to calculate differences and prepare the output.
 
             This function computes the difference between the highest portfolio and the lowest
@@ -310,7 +310,7 @@ class PortfolioAnalysis(Empirical):
                 group (DataFrame): The grouped DataFrame for which to process data.
 
             Returns:
-                DataFrame: The processed DataFrame with differences and averages.
+                Series: The processed Series with differences and averages.
             """
             group = group.sort_index(axis=0, level=[0, 1])
 
@@ -319,7 +319,7 @@ class PortfolioAnalysis(Empirical):
                 [(group.index.get_level_values(0)[0], "Diff")],
                 names=[self.time, core_var],
             )
-            core_diff = pd.Series(core_diff, index=new_index)
+            core_diff = Series(core_diff, index=new_index)
 
             return pd.concat([group, core_diff])
 
@@ -359,7 +359,7 @@ class PortfolioAnalysis(Empirical):
 
         def calculate_time_series_metrics(
             series: Series, format: bool = format
-        ) -> pd.DataFrame:
+        ) -> DataFrame:
             """Calculate metrics for each time series and format results.
 
             This function computes performance metrics for each time series and formats the results
@@ -384,7 +384,7 @@ class PortfolioAnalysis(Empirical):
                 values[core_var] = key
                 data.append(values)
 
-            combined_results = pd.DataFrame(data)
+            combined_results = DataFrame(data)
 
             combined_results.set_index(core_var, inplace=True)
 
@@ -425,7 +425,7 @@ class PortfolioAnalysis(Empirical):
         core_g: int,
         pivot: bool = True,
         format: bool = False,
-        type: str = "dependent",
+        sort_type: str = "dependent",
         decimal: Optional[int] = None,
         factor_return: bool = False,
     ) -> tuple:
@@ -452,7 +452,7 @@ class PortfolioAnalysis(Empirical):
         data_d = self.GroupN(
             [sort_var, core_var],
             [sort_g, core_g],
-            type=type,
+            sort_type=sort_type,
         )
 
         ew_ret_d = data_d.groupby(
@@ -467,7 +467,7 @@ class PortfolioAnalysis(Empirical):
         )
         vw_ret_d.index.names = [self.time, sort_var, core_var]
 
-        def process_group(group: pd.DataFrame) -> pd.DataFrame:
+        def process_group(group: DataFrame) -> DataFrame:
             """Process each group to calculate differences and averages.
 
             This function computes the difference between the highest portfolio and lowest portfolio,
@@ -529,7 +529,7 @@ class PortfolioAnalysis(Empirical):
         if factor_return:
             return ew_ret_d, vw_ret_d
 
-        def generate_time_series_dict(df: pd.DataFrame) -> dict:
+        def generate_time_series_dict(df: DataFrame) -> dict:
             """Generate a dictionary of time series data from the DataFrame.
 
             This function extracts time series for each unique combination of sorting and core variables.
@@ -556,8 +556,8 @@ class PortfolioAnalysis(Empirical):
             return time_series_dict
 
         def calculate_time_series_metrics(
-            df: pd.DataFrame, pivot: bool = pivot, format: bool = format
-        ) -> pd.DataFrame:
+            df: DataFrame, pivot: bool = pivot, format: bool = format
+        ) -> DataFrame:
             """Calculate metrics for each time series and format results.
 
             This function computes performance metrics for each time series and formats the results
@@ -585,7 +585,7 @@ class PortfolioAnalysis(Empirical):
                 values[core_var] = key[1]
                 data.append(values)
 
-            combined_results = pd.DataFrame(data)
+            combined_results = DataFrame(data)
 
             combined_results.set_index([sort_var, core_var], inplace=True)
 
@@ -611,16 +611,16 @@ class PortfolioAnalysis(Empirical):
                 :, ~combined_results.columns.str.endswith("p")
             ]
 
-            def reorder_diff_avg(df: pd.DataFrame) -> pd.DataFrame:
+            def reorder_diff_avg(df: DataFrame) -> DataFrame:
                 """Reorder the rows and columns of a DataFrame to place 'Diff' before 'Avg'.
 
                 This function rearranges the DataFrame to improve readability.
 
                 Args:
-                    df (pd.DataFrame): The DataFrame to reorder.
+                    df (DataFrame): The DataFrame to reorder.
 
                 Returns:
-                    pd.DataFrame: The reordered DataFrame.
+                    DataFrame: The reordered DataFrame.
                 """
                 columns_order = [
                     col for col in df.columns if col not in ["Diff", "Avg"]

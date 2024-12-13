@@ -24,6 +24,7 @@ class TimeSeries(Data):
     time: str = "date"
     frequency: Literal["D", "M", "Y"] = "M"
     factors: list[str] = field(init=False)
+    is_copy: bool = False
 
     def __repr__(self) -> str:
         return f"TimeSeriesData({self.name})"  # todo: add frequency
@@ -34,6 +35,8 @@ class TimeSeries(Data):
 
         This method renames the time column to a standardized name and identifies remaining columns as factors.
         """
+        if self.is_copy:
+            self.df = copy.deepcopy(self.df)
         self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
         self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
         self.df = self.df.sort_values(by=self.time)

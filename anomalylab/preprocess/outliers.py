@@ -40,7 +40,7 @@ class OutlierMethod:
         Returns:
             Series: A new Series with winsorized values.
         """
-        return pd.Series(
+        return Series(
             data=np.where(
                 series.isnull(),
                 np.nan,
@@ -69,7 +69,7 @@ class OutlierMethod:
         Returns:
             Series: A new Series with truncated values.
         """
-        return pd.Series(
+        return Series(
             data=np.where(
                 series.isnull(),
                 np.nan,
