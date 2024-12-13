@@ -131,11 +131,11 @@ class FamaMacBethRegression(Empirical):
                 coefs = results.params
                 coefs[self.time] = time
                 coef_df.append(coefs)
-            coef_df = pd.DataFrame(coef_df)
+            coef_df = DataFrame(coef_df)
             coef_df = coef_df[
                 [self.time] + [col for col in coef_df.columns if col != self.time]
             ]
-            return pd.DataFrame(coef_df)
+            return DataFrame(coef_df)
 
         # Fama-MacBeth regression with Newey-West adjustment
         fmb = FamaMacBeth(
@@ -207,7 +207,7 @@ class FamaMacBethRegression(Empirical):
         Returns:
             Series: Formatted regression results including parameters, t-values, and statistics.
         """
-        result: Series = pd.DataFrame(
+        result: Series = DataFrame(
             data={
                 "params": reg_result["params"].map(
                     arg=lambda x: round_to_string(value=x, decimal=decimal)

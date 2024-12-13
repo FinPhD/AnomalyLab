@@ -19,7 +19,7 @@ from anomalylab.visualization import FormatExcel
 
 @dataclass
 class Panel:
-    _df: pd.DataFrame = field(repr=False)
+    _df: DataFrame = field(repr=False)
     name: Optional[str] = None
     id: str = "permno"
     time: str = "date"
@@ -262,7 +262,7 @@ class Panel:
         draw: bool = False,
         path: Optional[str] = None,
         decimal: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> DataFrame:
         return self.persistence_processor.transition_matrix(
             var=var,
             group=group,
@@ -306,7 +306,7 @@ class Panel:
         factors_series: Optional[TimeSeries] = None,
         pivot: bool = True,
         format: bool = False,
-        type: str = "dependent",
+        sort_type: str = "dependent",
         decimal: Optional[int] = None,
         factor_return: bool = False,
     ) -> tuple:
@@ -319,7 +319,7 @@ class Panel:
             core_g=core_g,
             pivot=pivot,
             format=format,
-            type=type,
+            sort_type=sort_type,
             decimal=decimal,
             factor_return=factor_return,
         )

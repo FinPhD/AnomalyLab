@@ -13,7 +13,6 @@ class Data(ABC):
 
     df: DataFrame
     name: Optional[str] = None
-    is_copy: bool = False
 
     def __post_init__(self) -> None:
         """
@@ -23,8 +22,7 @@ class Data(ABC):
         2. Preprocess the data.
         3. Set the flag if needed.
         """
-        if self.is_copy:
-            self.df = copy.deepcopy(self.df)
+
         self._check_columns()
         self._preprocess()
         self.set_flag()

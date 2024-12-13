@@ -74,7 +74,7 @@ class Correlation(Empirical):
             )
             is_upper = False  # Switch to lower triangle for the next method
 
-        return pd.DataFrame(data=merged_corr, index=columns, columns=columns).map(
+        return DataFrame(data=merged_corr, index=columns, columns=columns).map(
             func=round_to_string,
             decimal=decimal or self.decimal,  # Round results to specified decimals
         )
