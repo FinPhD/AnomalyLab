@@ -3,7 +3,7 @@ from anomalylab.utils.imports import *
 
 @dataclass
 class FormatExcel:
-    """Class to format Excel files by adjusting cell alignment and borders.
+    """Class to format Excel files by adjusting cell alignment, borders, and column widths.
 
     Attributes:
         path (str): The directory or file path of the Excel file(s) to format.
@@ -92,15 +92,44 @@ class FormatExcel:
                         elif direction == "to_round":
                             cell.value = cell.value.replace("[", "(").replace("]", ")")
 
+    def auto_adjust_column_widths(self):
+        """Automatically adjusts the column widths to fit the contents."""
+        for ws in self.wb.worksheets:
+            for column in ws.columns:
+                max_length = 0
+                col_letter = column[0].column_letter  # Get the column letter
+                for cell in column:
+                    try:
+                        cell_length = sum(
+                            2 if ord(char) > 127 else 1 for char in str(cell.value)
+                        )
+                        max_length = max(max_length, cell_length)
+                    except:
+                        pass
+                # Adjust for header row
+                # header_cell = ws[f"{col_letter}1"]
+                # if header_cell.value:
+                #     max_length = max(max_length, len(str(header_cell.value)))
+                adjusted_width = max_length + 2  # Add some padding to the width
+                ws.column_dimensions[col_letter].width = adjusted_width
+
     def save(self):
         """Saves the currently loaded workbook to its file path."""
         self.wb.save(self.file_path)
 
-    def process(self, align=True, line=True, convert_brackets=False):
+    def process(
+        self, align=True, line=True, convert_brackets=False, adjust_col_widths=False
+    ):
         """Processes and formats Excel files.
 
         - If the provided path is a directory, it formats all Excel files in that directory.
         - If the provided path is a file, it formats that specific Excel file.
+
+        Args:
+            align (bool): Whether to apply text alignment. Default is True.
+            line (bool): Whether to apply borders. Default is True.
+            convert_brackets (bool): Whether to convert brackets. Default is False.
+            auto_adjust (bool): Whether to adjust column widths. Default is False.
         """
         files_to_process = (
             glob(os.path.join(self.path, "*.xlsx"))
@@ -116,10 +145,12 @@ class FormatExcel:
                 self.line()
             if convert_brackets:
                 self.convert_brackets()
+            if adjust_col_widths:
+                self.auto_adjust_column_widths()
             self.save()
 
 
 if __name__ == "__main__":
     path = "..."
     excel_formatter = FormatExcel(path)
-    excel_formatter.process(convert_brackets=True)
+    excel_formatter.process()

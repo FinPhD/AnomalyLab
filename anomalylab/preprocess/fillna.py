@@ -201,12 +201,15 @@ class FillNa(Preprocessor):
 
     def _warning(self, fill_columns: list[str]) -> None:
         """
-        Issues warnings regarding missing values and normalization status.
+        Emit warnings regarding missing values and normalization status.
 
-        This method checks if any missing values are present in the specified
-        fill_columns. If none are found, it emits a warning. Additionally,
-        it checks if the data has already been normalized, in which case
-        it warns that missing values have been filled with zeros.
+        This method performs the following checks:
+        1. It verifies if there are any missing values in the specified `fill_columns`.
+        - If no missing values are found, a warning is issued indicating this.
+        2. It checks whether the data has already been normalized.
+        - If normalized, a warning is issued that missing values were filled with zeros during normalization.
+        3. It checks whether missing values were filled previously.
+        - If so, a warning is issued to indicate that missing values have already been handled earlier.
 
         Args:
             fill_columns (list[str]): The list of columns to check for missing values.
@@ -215,7 +218,11 @@ class FillNa(Preprocessor):
             warnings.warn(message=f"Missing values not found in {fill_columns}.")
         if self.panel_data.normalize:
             warnings.warn(
-                message=f"The data has already been normalized and the missing values have been filled 0."
+                message=f"The data has already been normalized, and missing values have been filled with 0."
+            )
+        if self.panel_data.fillna:
+            warnings.warn(
+                message=f"The missing values have already been handled earlier."
             )
 
 
@@ -224,7 +231,9 @@ if __name__ == "__main__":
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
+    panel: PanelData = PanelData(
+        df=df, name="Stocks", ret="return", classifications="industry"
+    )
 
     fill_nan: FillNa = FillNa(panel_data=panel)
     fill_nan.fill_group_column(
