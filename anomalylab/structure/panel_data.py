@@ -182,6 +182,8 @@ class PanelData(Data):
                 raise ValueError("No classifications found.")
             check_columns = set(self.classifications)
         elif check_range == "characteristics":
+            if self.firm_characteristics is None:
+                raise ValueError("No firm characteristics found.")
             check_columns = set(self.firm_characteristics)
         else:
             raise ValueError("Invalid check_range value.")

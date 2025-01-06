@@ -121,8 +121,7 @@ class Panel:
 
     @property
     def fm_preprocessor(self) -> FamaMacBethRegression:
-        if self._fm_preprocessor is None:
-            self._fm_preprocessor = FamaMacBethRegression(panel_data=self.panel_data)
+        self._fm_preprocessor = FamaMacBethRegression(panel_data=self.panel_data)
         return self._fm_preprocessor
 
     def format_preprocessor(self, path: str) -> FormatExcel:
