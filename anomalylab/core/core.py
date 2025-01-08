@@ -354,10 +354,18 @@ class Panel:
         )
 
     def format_excel(
-        self, path: str, align=True, line=True, convert_brackets=False
+        self,
+        path: str,
+        align=True,
+        line=True,
+        convert_brackets=False,
+        adjust_col_widths=False,
     ) -> None:
         self.format_preprocessor(path=path).process(
-            align=align, line=line, convert_brackets=convert_brackets
+            align=align,
+            line=line,
+            convert_brackets=convert_brackets,
+            adjust_col_widths=adjust_col_widths,
         )
 
 
