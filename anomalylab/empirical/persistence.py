@@ -204,8 +204,9 @@ if __name__ == "__main__":
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
-
+    panel: PanelData = PanelData(
+        df=df, name="Stocks", ret="return", classifications="industry"
+    )
     persistence = Persistence(panel)
     pp(persistence.average_persistence(periods=[1, 3, 6, 12, 36, 60]))
     pp(

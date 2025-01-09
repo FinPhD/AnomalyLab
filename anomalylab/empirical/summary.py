@@ -125,7 +125,9 @@ if __name__ == "__main__":
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="panel", classifications="industry")
+    panel: PanelData = PanelData(
+        df=df, name="Stocks", ret="return", classifications="industry"
+    )
     summary = Summary(panel_data=panel)
     pp(
         summary.average_statistics(

@@ -24,7 +24,7 @@ class Panel:
     id: str = "permno"
     time: str = "date"
     frequency: Literal["D", "M", "Y"] = "M"
-    ret: str = "return"
+    ret: Optional[str] = None
     classifications: Optional[list[str] | str] = None
     drop_all_chars_missing: bool = False
     is_copy: bool = False
@@ -41,6 +41,7 @@ class Panel:
             drop_all_chars_missing=self.drop_all_chars_missing,
             is_copy=self.is_copy,
         )
+        self.firm_characteristics = self.panel_data.firm_characteristics
         self._normalize_processor = None
         self._fillna_processor = None
         self._winsorize_processor = None
@@ -335,6 +336,7 @@ class Panel:
         industry_weighed_method: Literal["value", "equal"] = "value",
         is_winsorize: bool = False,
         is_normalize: bool = False,
+        dummy_no_norm: Optional[list[str] | str] = None,
         decimal: Optional[int] = None,
         return_intermediate: bool = False,
     ) -> DataFrame:
@@ -349,6 +351,7 @@ class Panel:
             industry_weighed_method=industry_weighed_method,
             is_winsorize=is_winsorize,
             is_normalize=is_normalize,
+            dummy_no_norm=dummy_no_norm,
             decimal=decimal,
             return_intermediate=return_intermediate,
         )
@@ -383,6 +386,7 @@ if __name__ == "__main__":
     panel = Panel(
         df,
         name="Stocks",
+        ret="return",
         classifications="industry",
         drop_all_chars_missing=True,
         is_copy=False,
