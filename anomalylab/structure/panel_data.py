@@ -61,8 +61,9 @@ class PanelData(Data):
         if self.is_copy:
             self.df = copy.deepcopy(self.df)
         self.df[self.id] = self.df[self.id].astype(int)
-        self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
-        self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
+        if not isinstance(self.df[self.time].dtype, pd.PeriodDtype):
+            self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
+            self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
         self.df.sort_values(by=[self.time, self.id], inplace=True)
         basic_column = (
             [self.id, self.time] if self.ret is None else [self.id, self.time, self.ret]

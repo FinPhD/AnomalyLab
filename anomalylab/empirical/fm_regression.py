@@ -92,6 +92,7 @@ class FamaMacBethRegression(Empirical):
         df: DataFrame,
         reg: RegModel,
         is_normalize: bool,
+        dummy_no_norm: list[str] = [],
         return_intermediate: bool = False,
     ) -> RegResult:
         """Performs Fama-MacBeth regression on the provided DataFrame.
@@ -104,6 +105,11 @@ class FamaMacBethRegression(Empirical):
             df (DataFrame): DataFrame containing the data for regression.
             reg (RegModel): Model specification containing endogenous and exogenous variables.
             is_normalize (bool): Indicates whether to normalize the exogenous variables.
+            dummy_no_norm (list[str]): List of variable names that should be excluded from normalization.
+                Typically, these are dummy variables that take values like 0 or 1,
+                where normalization may not make sense.
+            return_intermediate (bool): If True, returns intermediate regression results
+                (e.g., coefficients, t-values, and R²) for each time period.
 
         Returns:
             RegResult: Results of the regression including parameters, t-values, p-values, and adjusted R².
@@ -115,9 +121,27 @@ class FamaMacBethRegression(Empirical):
         df = df.groupby(self.time).filter(lambda x: len(x) > 1)
         lag: int = math.ceil(4 * (df[self.time].nunique() / 100) ** (4 / 25))
         if is_normalize:
-            df[exogenous] = df.groupby(self.time)[exogenous].transform(
-                func=lambda x: (x - x.mean()) / x.std()
-            )
+            dummy_no_norm = [col for col in dummy_no_norm if col in exogenous]
+
+            variables_to_normalize = [
+                col for col in exogenous if col not in dummy_no_norm
+            ]
+
+            for col in variables_to_normalize:
+                grouped_std = df.groupby(self.time)[col].std()
+
+                if (grouped_std == 0).any():
+                    problematic_group = grouped_std[grouped_std == 0].index.tolist()
+                    raise ValueError(
+                        f"Standard deviation is 0 for variable '{col}' in group(s) {problematic_group}. "
+                        f"Cannot normalize this variable. If '{col}' is a dummy variable, please add it to `dummy_no_norm`."
+                    )
+
+            if variables_to_normalize:
+                df[variables_to_normalize] = df.groupby(self.time)[
+                    variables_to_normalize
+                ].transform(func=lambda x: (x - x.mean()) / x.std())
+
         df[self.time] = df[self.time].dt.to_timestamp()
         df = df.set_index([self.id, self.time])
 
@@ -277,6 +301,7 @@ class FamaMacBethRegression(Empirical):
         industry_weighed_method: Literal["value", "equal"] = "value",
         is_winsorize: bool = False,
         is_normalize: bool = False,
+        dummy_no_norm: Optional[list[str] | str] = None,
         decimal: Optional[int] = None,
         return_intermediate: bool = False,  # New parameter to control whether intermediate results are returned
     ) -> DataFrame:
@@ -297,6 +322,8 @@ class FamaMacBethRegression(Empirical):
             industry_weighed_method (Literal["value", "equal"]): Method for weighting industries.
             is_winsorize (bool): Indicates whether to apply winsorization.
             is_normalize (bool): Indicates whether to normalize exogenous variables.
+            dummy_no_norm (Optional[list[str] | str]): Name(s) of dummy variables (e.g., 0 or 1)
+                that should be excluded from normalization.
             decimal (Optional[int]): Number of decimal places for rounding in output.
             return_intermediate (bool): If True, returns the intermediate results (e.g., coefficients for each time period).
 
@@ -307,6 +334,7 @@ class FamaMacBethRegression(Empirical):
         reg_models: RegModels = self._model_parse(
             regs=regs, endog=endog, exog=columns_to_list(exog)
         )
+        dummy_no_norm = columns_to_list(dummy_no_norm)
         self._winsorize(is_winsorize=is_winsorize, exog=reg_models.exogenous)
         self._industry_weighted(
             endog=reg_models.dependent,
@@ -322,6 +350,7 @@ class FamaMacBethRegression(Empirical):
                     df=self.panel_data.df,
                     reg=model,
                     is_normalize=is_normalize,
+                    dummy_no_norm=dummy_no_norm,
                     return_intermediate=True,
                 )
                 for model in reg_models.models
@@ -337,6 +366,8 @@ class FamaMacBethRegression(Empirical):
                             df=self.panel_data.df,
                             reg=model,
                             is_normalize=is_normalize,
+                            dummy_no_norm=dummy_no_norm,
+                            return_intermediate=False,
                         ),
                         decimal=decimal or self.decimal,
                         exog_order=exog_order,
@@ -361,8 +392,9 @@ if __name__ == "__main__":
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
-
+    panel: PanelData = PanelData(
+        df=df, name="Stocks", ret="return", classifications="industry"
+    )
     fm = FamaMacBethRegression(panel_data=panel)
     result = fm.fit(
         # endog="return",
@@ -386,8 +418,8 @@ if __name__ == "__main__":
         # weight="MktCap",
         is_winsorize=True,
         is_normalize=True,
-        return_intermediate=True,
+        return_intermediate=False,
         # decimal=2,
     )
     pp(result)
-    pp(result[0])
+    # pp(result[0])

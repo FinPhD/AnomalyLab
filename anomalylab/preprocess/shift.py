@@ -110,7 +110,9 @@ if __name__ == "__main__":
 
     df: DataFrame = DataSet.get_panel_data()
 
-    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
+    panel: PanelData = PanelData(
+        df=df, name="Stocks", ret="return", classifications="industry"
+    )
     shift = Shift(panel_data=panel)
     shift.shift(
         # columns="MktCap",

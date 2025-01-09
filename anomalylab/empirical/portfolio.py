@@ -680,7 +680,9 @@ if __name__ == "__main__":
         "FF5": ["MKT(5F)", "SMB(5F)", "HML(5F)", "RMW(5F)", "CMA(5F)"],
     }
 
-    panel: PanelData = PanelData(df=df, name="Stocks", classifications="industry")
+    panel: PanelData = PanelData(
+        df=df, name="Stocks", ret="return", classifications="industry"
+    )
     time_series: TimeSeries = TimeSeries(df=ts, name="Factor Series")
 
     portfolio = PortfolioAnalysis(
