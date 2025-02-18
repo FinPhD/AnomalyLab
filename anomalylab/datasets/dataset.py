@@ -18,16 +18,15 @@ class DataSet:
     def get_panel_data(cls) -> DataFrame:
         """Return the panel data example."""
         return pd.read_csv(
-            filepath_or_buffer=str(resources.files("anomalylab.datasets"))
-            + "/panel_data.csv"
+            str(resources.files("anomalylab.datasets")) + "/panel_data.csv"
         )
 
     @classmethod
     def get_time_series_data(cls) -> DataFrame:
         """Return the time series data example."""
+        # 从resources文件夹中读取time_series_data.csv文件，并返回DataFrame类型的数据
         return pd.read_csv(
-            filepath_or_buffer=str(resources.files("anomalylab.datasets"))
-            + "/time_series_data.csv"
+            str(resources.files("anomalylab.datasets")) + "/time_series_data.csv"
         )
 
 

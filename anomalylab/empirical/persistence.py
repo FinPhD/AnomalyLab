@@ -128,6 +128,8 @@ class Persistence(Empirical):
             lag (int): The lag period for the transition.
             draw (bool, optional): Whether to plot the transition matrix heatmap. Default is False.
             path (str, optional): The file path to save the heatmap if draw is True.
+            decimal (Optional[int], optional): The number of decimal places to round the results to.
+                Defaults to None.
 
         Returns:
             DataFrame: A DataFrame representing the transition matrix.
