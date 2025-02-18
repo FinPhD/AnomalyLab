@@ -70,8 +70,8 @@ panel = Panel(
 )
 time_series: TimeSeries = TimeSeries(
     df=ts, name="Factor Series", time="date", frequency="M", is_copy=False
-pp(panel)
 )
+pp(panel)
 ```
 
 ### Preprocessing Data
