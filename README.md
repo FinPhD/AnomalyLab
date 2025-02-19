@@ -38,8 +38,6 @@ This package provides a comprehensive suite of tools for empirical asset pricing
 ### Importing Data
 
 ```python
-from importlib import resources
-
 import pandas as pd
 from pandas import DataFrame
 
@@ -83,7 +81,7 @@ Several preprocessing functions are available for handling missing values, norma
 # Filling Group Columns
 panel.fill_group_column(group_column="industry", value="Other")
 # Filling Missing Values
-panel.fillna(method="mean", group_columns="date")
+panel.fillna(method="mean", value=0, group_columns="date")
 
 # Normalizing Data:
 # panel.normalize(method="zscore", group_columns="date")
@@ -92,7 +90,7 @@ panel.fillna(method="mean", group_columns="date")
 # panel.shift(periods=1, drop_original=False)
 
 # Winsorizing Data:
-panel.winsorize(method="winsorize")
+panel.winsorize(method="winsorize", group_columns="date")
 pp(panel)
 ```
 
@@ -121,7 +119,7 @@ The persistence() function computes persistence for a given set of periods to an
 The transition_matrix() function calculates the transition matrix to evaluate how a variable moves between different states (e.g., deciles) over time.
 
 ```python
-person = panel.persistence(periods=[1, 3, 6, 12, 36, 60])
+persistence = panel.persistence(periods=[1, 3, 6, 12, 36, 60])
 pp(persistence)
 pp(
     panel.transition_matrix(

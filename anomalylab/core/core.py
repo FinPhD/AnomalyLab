@@ -710,6 +710,7 @@ if __name__ == "__main__":
     panel.fillna(
         # columns="MktCap",
         method="mean",
+        value=0,
         group_columns="date",
         # no_process_columns="MktCap",
         # process_all_characteristics=True,
@@ -723,7 +724,7 @@ if __name__ == "__main__":
     # )
     # panel.shift(periods=1, drop_original=False)
 
-    panel.winsorize(method="winsorize")
+    panel.winsorize(method="winsorize", group_columns="date")
     pp(panel)
 
     summary = panel.summary()
