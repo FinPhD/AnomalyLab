@@ -480,26 +480,30 @@ class Panel:
         weight: str,
         vars: Union[str, list[str]],
         groups: Union[int, list[int]],
-        sort_type: Optional[str] = None,
+        sort_type: Literal["independent", "dependent"] = "independent",
+        inplace: bool = False,
     ) -> tuple:
         """Group variables into portfolios based on specified groups.
 
         This method creates portfolios for the specified variables in the panel data.
 
         Args:
-            endog (Optional[str]): The name of the endogenous variable for analysis.
-            weight (Optional[str]): The name of the variable representing portfolio weights.
-            vars (list of str): List of variables to group.
-            groups (list of int): List of integers defining the number of groups for each variable.
-            sort_type (str, optional): Type of sorting, can be 'dependent' to adjust based on the previous variable.
+            vars (Union[str, list[str]]): List of variables to group.
+            groups (Union[int, list[int]]): List of integers defining the number of groups for each variable.
+            sort_type (Literal["independent", "dependent"]): Type of sorting, either 'independent'
+                (group within time period) or 'dependent' (group based on previous variable).
+                Defaults to "independent".
+            inplace (bool): If True, modifies the original dataset and returns None. Defaults to False.
 
         Returns:
-            DataFrame: A DataFrame with new columns for grouped variables.
+            DataFrame: If inplace=False (default), returns a new DataFrame with grouped variables.
+            None: If inplace=True, modifies the original dataset and returns None.
         """
         return self.portfolio_analysis_processor(endog=endog, weight=weight).GroupN(
             vars=vars,
             groups=groups,
             sort_type=sort_type,
+            inplace=inplace,
         )
 
     def univariate_analysis(
@@ -513,6 +517,7 @@ class Panel:
         format: bool = False,
         decimal: Optional[int] = None,
         factor_return: bool = False,
+        already_grouped: bool = False,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -528,6 +533,8 @@ class Panel:
             format (bool): Whether to format the output for display. Defaults to False.
             decimal (Optional[int]): The number of decimal places for formatting. Defaults to None.
             factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
+            already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
+                Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -540,6 +547,7 @@ class Panel:
             format=format,
             decimal=decimal,
             factor_return=factor_return,
+            already_grouped=already_grouped,
         )
 
     def bivariate_analysis(
@@ -557,6 +565,7 @@ class Panel:
         sort_type: str = "dependent",
         decimal: Optional[int] = None,
         factor_return: bool = False,
+        already_grouped: bool = False,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -576,6 +585,8 @@ class Panel:
             type (str): Type of grouping, can be 'dependent' or 'independent'. Defaults to 'dependent'.
             decimal (Optional[int]): The number of decimal places to round to. Defaults to None.
             factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
+            already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
+                Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -592,6 +603,7 @@ class Panel:
             sort_type=sort_type,
             decimal=decimal,
             factor_return=factor_return,
+            already_grouped=already_grouped,
         )
 
     def fm_reg(
