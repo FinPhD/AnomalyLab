@@ -1,4 +1,4 @@
-from pandas.core.frame import DataFrame
+from pandas import DataFrame
 
 from anomalylab.config import *
 from anomalylab.empirical.empirical import Empirical
@@ -69,21 +69,26 @@ class PortfolioAnalysis(Empirical):
         self,
         vars: Union[str, list[str]],
         groups: Union[int, list[int]],
-        sort_type: Optional[str] = None,
-    ) -> DataFrame:
+        sort_type: Literal["independent", "dependent"] = "independent",
+        inplace: bool = False,
+    ) -> Optional[DataFrame]:
         """Group variables into portfolios based on specified groups.
 
         This method creates portfolios for the specified variables in the panel data.
 
         Args:
-            vars (list of str): List of variables to group.
-            groups (list of int): List of integers defining the number of groups for each variable.
-            sort_type (str, optional): Type of sorting, can be 'dependent' to adjust based on the previous variable.
+            vars (Union[str, list[str]]): List of variables to group.
+            groups (Union[int, list[int]]): List of integers defining the number of groups for each variable.
+            sort_type (Literal["independent", "dependent"]): Type of sorting, either 'independent'
+                (group within time period) or 'dependent' (group based on previous variable).
+                Defaults to "independent".
+            inplace (bool): If True, modifies the original dataset and returns None. Defaults to False.
 
         Returns:
-            DataFrame: A DataFrame with new columns for grouped variables.
+            DataFrame: If inplace=False (default), returns a new DataFrame with grouped variables.
+            None: If inplace=True, modifies the original dataset and returns None.
         """
-        # Ensure vars is a list
+        # Convert single input to list
         if isinstance(vars, str):
             vars = [vars]
 
@@ -92,6 +97,10 @@ class PortfolioAnalysis(Empirical):
 
         groups_adj = [[0, 0.3, 0.7, 1] if g == 3 else g for g in groups]
 
+        # Track original data length for missing value reporting
+        original_length = len(self.panel_data.df)
+
+        # Create working copy with NA removal
         out_df = self.panel_data.df.dropna(
             subset=[
                 self.time,
@@ -102,12 +111,12 @@ class PortfolioAnalysis(Empirical):
             ]
         ).copy()
 
-        # Adjust group definitions
+        n_dropped = original_length - len(out_df)
+
         group_col = [self.time]
         for i, var in enumerate(vars):
             if sort_type == "dependent" and i > 0:
                 group_col.append(f"{vars[i-1]}_g{groups[i-1]}")
-                # Grouping dependent on the previous variable
                 out_df[f"{var}_g{groups[i]}"] = (
                     out_df.groupby(group_col, observed=False)[var]
                     .apply(
@@ -122,7 +131,7 @@ class PortfolioAnalysis(Empirical):
                     .drop(group_col, axis=1)
                 )
             else:
-                # Grouping independently
+                # Independent sorting
                 out_df[f"{var}_g{groups[i]}"] = (
                     out_df.groupby(self.time)[var]
                     .apply(
@@ -137,10 +146,16 @@ class PortfolioAnalysis(Empirical):
                     .drop(self.time, axis=1)
                 )
 
-            # Convert to integer
+            # Ensure integer type for groups
             out_df[f"{var}_g{groups[i]}"] = out_df[f"{var}_g{groups[i]}"].astype(int)
 
-        return out_df
+        # Handle inplace operation
+        if inplace:
+            self.panel_data.df = out_df.copy()
+            if n_dropped > 0:
+                print(f"Removed {n_dropped} rows with missing values during grouping.")
+        else:
+            return out_df
 
     def _claculate_value(self, df: DataFrame, decimal: Optional[int] = None) -> dict:
         """Calculate various portfolio performance metrics.
@@ -268,6 +283,7 @@ class PortfolioAnalysis(Empirical):
         format: bool = False,
         decimal: Optional[int] = None,
         factor_return: bool = False,
+        already_grouped: bool = False,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -281,14 +297,20 @@ class PortfolioAnalysis(Empirical):
             format (bool): Whether to format the output for display. Defaults to False.
             decimal (Optional[int]): The number of decimal places for formatting. Defaults to None.
             factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
+            already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
+                Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
         """
-        data_d: DataFrame = self.GroupN(
-            core_var,
-            core_g,
-        )
+
+        if not already_grouped:
+            data_d = self.GroupN(core_var, core_g)
+        else:
+            expected_col = f"{core_var}_g{core_g}"
+            if expected_col not in self.panel_data.df.columns:
+                raise ValueError(f"Pre-grouped column {expected_col} not found in data")
+            data_d = self.panel_data.df.copy()
 
         ew_ret_d: Series = data_d.groupby([self.time, f"{core_var}_g{core_g}"])[
             self.endog
@@ -428,6 +450,7 @@ class PortfolioAnalysis(Empirical):
         sort_type: str = "dependent",
         decimal: Optional[int] = None,
         factor_return: bool = False,
+        already_grouped: bool = False,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -442,18 +465,35 @@ class PortfolioAnalysis(Empirical):
             core_g (int): The group number for portfolio grouping of the core variable.
             pivot (bool): Whether to pivot the results table. Defaults to True.
             format (bool): Whether to format the output for display. Defaults to False.
-            type (str): Type of grouping, can be 'dependent' or 'independent'. Defaults to 'dependent'.
+            type (str): Type of grouping, can be 'dependent' or 'sort_type'. Defaults to 'dependent'.
             decimal (Optional[int]): The number of decimal places to round to. Defaults to None.
             factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
+            already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
+                Defaults to False.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
         """
-        data_d = self.GroupN(
-            [sort_var, core_var],
-            [sort_g, core_g],
-            sort_type=sort_type,
-        )
+
+        if not already_grouped:
+            data_d = self.GroupN(
+                [sort_var, core_var],
+                [sort_g, core_g],
+                sort_type=sort_type,
+            )
+        else:
+            # Check existence of both pre-grouped columns when using existing groups
+            required_columns = [f"{sort_var}_g{sort_g}", f"{core_var}_g{core_g}"]
+            # Validate all required grouping columns exist
+            missing_cols = [
+                col for col in required_columns if col not in self.panel_data.df.columns
+            ]
+            if missing_cols:
+                raise ValueError(
+                    f"Pre-grouped columns missing: {', '.join(missing_cols)}. "
+                    f"Required columns: {required_columns}"
+                )
+            data_d = self.panel_data.df.copy()
 
         ew_ret_d = data_d.groupby(
             [self.time, f"{sort_var}_g{sort_g}", f"{core_var}_g{core_g}"]
@@ -693,15 +733,25 @@ if __name__ == "__main__":
         factors_series=time_series,
     )
 
-    group = portfolio.GroupN("Illiq", 10)
-    pp(group)
+    # portfolio.GroupN("Illiq", 10, inplace=True)
+    portfolio.GroupN(["MktCap", "Illiq"], [3, 5], sort_type="dependent", inplace=True)
 
-    uni_ew, uni_vw = portfolio.univariate_analysis("Illiq", 10, factor_return=False)
+    uni_ew, uni_vw = portfolio.univariate_analysis(
+        "Illiq", 10, factor_return=False, already_grouped=False
+    )
     pp(uni_ew)
     pp(uni_vw)
 
     bi_ew, bi_vw = portfolio.bivariate_analysis(
-        "Illiq", "IdioVol", 10, 10, False, False, "dependent", factor_return=False
+        "MktCap",
+        "Illiq",
+        3,
+        5,
+        False,
+        False,
+        "dependent",
+        factor_return=False,
+        already_grouped=True,
     )
     pp(bi_ew)
     pp(bi_vw)
