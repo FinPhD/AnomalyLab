@@ -499,12 +499,20 @@ class Panel:
             DataFrame: If inplace=False (default), returns a new DataFrame with grouped variables.
             None: If inplace=True, modifies the original dataset and returns None.
         """
-        return self.portfolio_analysis_processor(endog=endog, weight=weight).GroupN(
-            vars=vars,
-            groups=groups,
-            sort_type=sort_type,
-            inplace=inplace,
-        )
+        if inplace:
+            self.panel_data.df = self.portfolio_analysis_processor(
+                endog=endog, weight=weight
+            ).GroupN(
+                vars=vars,
+                groups=groups,
+                sort_type=sort_type,
+            )
+        else:
+            return self.portfolio_analysis_processor(endog=endog, weight=weight).GroupN(
+                vars=vars,
+                groups=groups,
+                sort_type=sort_type,
+            )
 
     def univariate_analysis(
         self,
@@ -739,30 +747,37 @@ if __name__ == "__main__":
     panel.winsorize(method="winsorize", group_columns="date")
     pp(panel)
 
-    summary = panel.summary()
-    pp(summary)
+    # summary = panel.summary()
+    # pp(summary)
 
-    correlation = panel.correlation()
-    pp(correlation)
+    # correlation = panel.correlation()
+    # pp(correlation)
 
-    persistence = panel.persistence(periods=[1, 3, 6, 12, 36, 60])
-    pp(persistence)
-    pp(
-        panel.transition_matrix(
-            var="MktCap",
-            group=10,
-            lag=12,
-            draw=False,
-            # path=str(resources.files("anomalylab.datasets")) + "/transition_matrix.png",
-            path="...",
-            decimal=2,
-        )
-    )
+    # persistence = panel.persistence(periods=[1, 3, 6, 12, 36, 60])
+    # pp(persistence)
+    # pp(
+    #     panel.transition_matrix(
+    #         var="MktCap",
+    #         group=10,
+    #         lag=12,
+    #         draw=False,
+    #         # path=str(resources.files("anomalylab.datasets")) + "/transition_matrix.png",
+    #         path="...",
+    #         decimal=2,
+    #     )
+    # )
 
-    group_result = panel.group("return", "MktCap", "Illiq", 10)
+    panel.group("return", "MktCap", "Illiq", 10, inplace=True)
 
     uni_ew, uni_vw = panel.univariate_analysis(
-        "return", "MktCap", "Illiq", 10, Models, time_series, factor_return=False
+        "return",
+        "MktCap",
+        "Illiq",
+        10,
+        Models,
+        time_series,
+        factor_return=False,
+        already_grouped=True,
     )
     pp(uni_ew)
     pp(uni_vw)

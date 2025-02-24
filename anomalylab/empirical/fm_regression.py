@@ -172,7 +172,7 @@ class FamaMacBethRegression(Empirical):
             params=fmb.params,
             tvalues=fmb.tstats,
             pvalues=fmb.pvalues,
-            mean_obs=str(int(fmb.time_info["mean"])),
+            mean_obs=str(round(fmb.time_info["mean"])),
             rsquared=(
                 df.reset_index(level=df.index.names[0], drop=True)
                 .groupby(self.time)
