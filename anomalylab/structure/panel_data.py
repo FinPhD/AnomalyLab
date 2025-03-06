@@ -112,9 +112,17 @@ class PanelData(Data):
         """Check if the required columns are present in the DataFrame.
 
         Raises:
+            ValueError: If any duplicate column names are found in the DataFrame.
             ValueError: If any required columns are missing from the DataFrame.
             ValueError: If there are no firm characteristics remaining after checking.
         """
+        # Check for duplicate column names
+        duplicated_columns = self.df.columns[self.df.columns.duplicated()].tolist()
+        if duplicated_columns:
+            raise ValueError(
+                f"Duplicate column names found in the DataFrame: {duplicated_columns}"
+            )
+
         if isinstance(self.classifications, str):
             self.classifications = [self.classifications]
         # Check if the required columns are present in the DataFrame

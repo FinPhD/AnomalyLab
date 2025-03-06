@@ -49,9 +49,17 @@ class TimeSeries(Data):
         Check if the required column is present in the DataFrame and ensure there are additional columns.
 
         Raises:
+            ValueError: If duplicate column names are found in the DataFrame.
             ValueError: If the time column is missing from the DataFrame.
             ValueError: If there are no additional columns for factor returns.
         """
+        # Check for duplicate column names
+        duplicated_columns = self.df.columns[self.df.columns.duplicated()].tolist()
+        if duplicated_columns:
+            raise ValueError(
+                f"Duplicate column names found in the DataFrame: {duplicated_columns}"
+            )
+
         if self.time not in self.df.columns:
             raise ValueError(f"Missing column in the DataFrame: {self.time}")
 
