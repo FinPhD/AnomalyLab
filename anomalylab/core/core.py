@@ -626,7 +626,6 @@ class Panel:
         industry_weighed_method: Literal["value", "equal"] = "value",
         is_winsorize: bool = False,
         is_normalize: bool = False,
-        dummy_no_norm: Optional[list[str] | str] = None,
         decimal: Optional[int] = None,
         return_intermediate: bool = False,
     ) -> DataFrame:
@@ -647,8 +646,6 @@ class Panel:
             industry_weighed_method (Literal["value", "equal"]): Method for weighting industries.
             is_winsorize (bool): Indicates whether to apply winsorization.
             is_normalize (bool): Indicates whether to normalize exogenous variables.
-            dummy_no_norm (Optional[list[str] | str]): Name(s) of dummy variables (e.g., 0 or 1)
-                that should be excluded from normalization.
             decimal (Optional[int]): Number of decimal places for rounding in output.
             return_intermediate (bool): If True, returns the intermediate results (e.g., coefficients for each time period).
 
@@ -666,7 +663,6 @@ class Panel:
             industry_weighed_method=industry_weighed_method,
             is_winsorize=is_winsorize,
             is_normalize=is_normalize,
-            dummy_no_norm=dummy_no_norm,
             decimal=decimal,
             return_intermediate=return_intermediate,
         )
