@@ -53,7 +53,9 @@ class NormalizeMethod:
         return rescaled_df
 
     @classmethod
-    def call_method(cls, method: str, df: DataFrame) -> DataFrame:
+    def call_method(
+        cls, method: str, df: DataFrame, fillna_zero: bool = False
+    ) -> DataFrame:
         """
         Calls a specified normalization method on the input DataFrame.
 
@@ -66,19 +68,27 @@ class NormalizeMethod:
             cls: The class that is calling this method (NormalizeMethod).
             method (str): The name of the method to call ('zscore' or 'rank').
             df (DataFrame): The input DataFrame to be normalized.
+            fillna_zero (bool): If True, fills NaN values with zero after normalization.
+                Defaults to False.
 
         Returns:
-            DataFrame: The normalized DataFrame after applying the specified method.
+            DataFrame: The normalized DataFrame. NaN values are filled with zero
+                if `fillna_zero=True` is set.
 
         Raises:
             AttributeError: If the specified method does not exist.
         """
-        if hasattr(cls, method):
-            return getattr(cls, method)(df).fillna(value=0)
-        else:
+        if not hasattr(cls, method):
             raise AttributeError(
                 f"Method '{method}' not found, use 'zscore' or 'rank'."
             )
+
+        normalized_df = getattr(cls, method)(df)
+
+        if fillna_zero:
+            normalized_df = normalized_df.fillna(value=0)
+
+        return normalized_df
 
 
 @dataclass
@@ -101,6 +111,7 @@ class Normalize(Preprocessor):
         group_columns: Columns = None,
         no_process_columns: Columns = None,
         process_all_characteristics: bool = True,
+        fillna_zero: bool = False,
     ) -> Normalize:
         """
         Normalizes specified columns of the DataFrame using the chosen method.
@@ -121,6 +132,8 @@ class Normalize(Preprocessor):
                 normalization. Defaults to None.
             process_all_characteristics (bool, optional): Whether to process all
                 characteristics or not. Defaults to True.
+            fillna_zero (bool): If True, fills NaN values with zero after normalization.
+                Defaults to False.
 
         Returns:
             Normalize: The instance of the Normalize class with updated state.
@@ -144,7 +157,9 @@ class Normalize(Preprocessor):
         # Normalize the selected columns
         self.panel_data.transform(
             columns=columns,
-            func=lambda df: NormalizeMethod.call_method(method=method, df=df),
+            func=lambda df: NormalizeMethod.call_method(
+                method=method, df=df, fillna_zero=fillna_zero
+            ),
             group_columns=group_columns,
         )
 

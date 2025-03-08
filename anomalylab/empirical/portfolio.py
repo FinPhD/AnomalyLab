@@ -142,7 +142,7 @@ class PortfolioAnalysis(Empirical):
                         )
                     )
                     .reset_index()
-                    .set_index(f"level_{1}")
+                    .set_index(f"level_1")
                     .drop(self.time, axis=1)
                 )
 
