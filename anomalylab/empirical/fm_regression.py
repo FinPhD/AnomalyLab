@@ -1,9 +1,27 @@
-from anomalylab.config import *
+import math
+import warnings
+from dataclasses import dataclass
+from functools import partial
+from typing import Literal, Optional
+
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from linearmodels import FamaMacBeth
+from pandas import DataFrame, Series
+
 from anomalylab.empirical.empirical import Empirical
 from anomalylab.preprocess import OutlierHandler
 from anomalylab.structure import PanelData
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
+from anomalylab.utils import (
+    RegModel,
+    RegModels,
+    RegResult,
+    columns_to_list,
+    get_significance_star,
+    pp,
+    round_to_string,
+)
 
 
 @dataclass
@@ -76,12 +94,14 @@ class FamaMacBethRegression(Empirical):
                     raise ValueError(
                         "When calculating the value-weighted industry return, the weight column must be specified!"
                     )
-                func = lambda x: np.average(
-                    x, weights=self.panel_data.df.loc[x.index, weight]
-                )
+
+                def func(x):
+                    return np.average(
+                        x, weights=self.panel_data.df.loc[x.index, weight]
+                    )
             else:
                 raise ValueError(
-                    f"industry_weighed_method must be one of ['value', 'equal']"
+                    "industry_weighed_method must be one of ['value', 'equal']"
                 )
             self.panel_data.df[endog] -= self.panel_data.df.groupby(
                 by=[self.time, industry]

@@ -1,11 +1,17 @@
-from importlib import resources
+from importlib import resources  # noqa: F401
+from dataclasses import dataclass
+from typing import Optional
 
-from anomalylab.config import *
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from pandas import DataFrame
+
 from anomalylab.empirical.empirical import Empirical
 from anomalylab.preprocess.shift import Shift
 from anomalylab.structure import PanelData
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
+from anomalylab.utils import Columns, columns_to_list, pp, round_to_string
 
 
 @dataclass
@@ -72,7 +78,6 @@ class Persistence(Empirical):
         for var in columns:
             all_monthly_corrs = []
             for lag in periods:
-
                 # Store monthly correlations
                 monthly_corrs = []
 

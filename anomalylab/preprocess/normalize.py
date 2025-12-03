@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import warnings
+from dataclasses import dataclass
+from typing import Literal
+
+import numpy as np
+from pandas import DataFrame, Series
+
 from anomalylab.preprocess.preprocessor import Preprocessor
 from anomalylab.structure import PanelData
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
+from anomalylab.utils import Columns, columns_to_list, pp
 
 
 class NormalizeMethod:
@@ -54,8 +60,11 @@ class NormalizeMethod:
 
     @classmethod
     def call_method(
-        cls, method: str, df: DataFrame, fillna_zero: bool = False
-    ) -> DataFrame:
+        cls,
+        method: str,
+        df: DataFrame | Series,
+        fillna_zero_after_norm: bool = False,
+    ) -> DataFrame | Series:
         """
         Calls a specified normalization method on the input DataFrame.
 
@@ -68,12 +77,12 @@ class NormalizeMethod:
             cls: The class that is calling this method (NormalizeMethod).
             method (str): The name of the method to call ('zscore' or 'rank').
             df (DataFrame): The input DataFrame to be normalized.
-            fillna_zero (bool): If True, fills NaN values with zero after normalization.
+            fillna_zero_after_norm (bool): If True, fills NaN values with zero after normalization.
                 Defaults to False.
 
         Returns:
             DataFrame: The normalized DataFrame. NaN values are filled with zero
-                if `fillna_zero=True` is set.
+                if `fillna_zero_after_norm=True` is set.
 
         Raises:
             AttributeError: If the specified method does not exist.
@@ -85,8 +94,18 @@ class NormalizeMethod:
 
         normalized_df = getattr(cls, method)(df)
 
-        if fillna_zero:
+        if fillna_zero_after_norm:
             normalized_df = normalized_df.fillna(value=0)
+        else:
+            if isinstance(df, Series):
+                if df.isna().all():
+                    warnings.warn(f"Column {df.name} contains only missing values.")
+            else:
+                all_nan_cols = df.columns[df.isna().all()].tolist()
+                if all_nan_cols:
+                    warnings.warn(
+                        f"Columns {all_nan_cols} contain only missing values."
+                    )
 
         return normalized_df
 
@@ -111,7 +130,7 @@ class Normalize(Preprocessor):
         group_columns: Columns = None,
         no_process_columns: Columns = None,
         process_all_characteristics: bool = True,
-        fillna_zero: bool = False,
+        fillna_zero_after_norm: bool = False,
     ) -> Normalize:
         """
         Normalizes specified columns of the DataFrame using the chosen method.
@@ -132,7 +151,7 @@ class Normalize(Preprocessor):
                 normalization. Defaults to None.
             process_all_characteristics (bool, optional): Whether to process all
                 characteristics or not. Defaults to True.
-            fillna_zero (bool): If True, fills NaN values with zero after normalization.
+            fillna_zero_after_norm (bool): If True, fills NaN values with zero after normalization.
                 Defaults to False.
 
         Returns:
@@ -158,7 +177,7 @@ class Normalize(Preprocessor):
         self.panel_data.transform(
             columns=columns,
             func=lambda df: NormalizeMethod.call_method(
-                method=method, df=df, fillna_zero=fillna_zero
+                method=method, df=df, fillna_zero_after_norm=fillna_zero_after_norm
             ),
             group_columns=group_columns,
         )

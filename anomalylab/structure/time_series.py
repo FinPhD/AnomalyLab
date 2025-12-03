@@ -1,6 +1,12 @@
+import copy
+from dataclasses import dataclass, field
+from typing import Literal
+
+import pandas as pd
+from pandas import DataFrame
+
 from anomalylab.structure.data import Data
-from anomalylab.utils import *
-from anomalylab.utils.imports import *
+from anomalylab.utils import pp
 
 
 @dataclass
@@ -35,8 +41,6 @@ class TimeSeries(Data):
 
         This method renames the time column to a standardized name and identifies remaining columns as factors.
         """
-        if self.is_copy:
-            self.df = copy.deepcopy(self.df)
         if not isinstance(self.df[self.time].dtype, pd.PeriodDtype):
             self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
             self.df[self.time] = self.df[self.time].dt.to_period(freq=self.frequency)
@@ -53,6 +57,9 @@ class TimeSeries(Data):
             ValueError: If the time column is missing from the DataFrame.
             ValueError: If there are no additional columns for factor returns.
         """
+        if self.is_copy:
+            self.df = copy.deepcopy(self.df)
+
         # Check for duplicate column names
         duplicated_columns = self.df.columns[self.df.columns.duplicated()].tolist()
         if duplicated_columns:

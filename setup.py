@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="AnomalyLab",
-    version="0.4.3",
+    version="0.5.0",
     author="FinPhd",
     author_email="chenhaiwei@stu.sufe.edu.cn",
     description="A Python package for empirical asset pricing analysis.",

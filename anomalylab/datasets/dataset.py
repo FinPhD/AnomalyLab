@@ -1,7 +1,9 @@
 from importlib import resources
 
-from anomalylab.utils import *
-from anomalylab.utils.imports import *
+import pandas as pd
+from pandas import DataFrame
+
+from anomalylab.utils import pp
 
 
 class DataSet:

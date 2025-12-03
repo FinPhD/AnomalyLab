@@ -11,8 +11,7 @@ from anomalylab.empirical import (
 )
 from anomalylab.preprocess import FillNa, Normalize, OutlierHandler, Shift
 from anomalylab.structure import PanelData, TimeSeries
-from anomalylab.utils import *
-from anomalylab.utils.imports import *
+from anomalylab.utils import pp
 from anomalylab.visualization import FormatExcel
 
 __all__: list[str] = [

@@ -1,4 +1,9 @@
-from anomalylab.utils.imports import *
+import os
+from dataclasses import dataclass
+from glob import glob
+
+from openpyxl import load_workbook
+from openpyxl.styles import Alignment, Border, Side
 
 
 @dataclass
@@ -45,7 +50,7 @@ class FormatExcel:
         - Creates a thick border for the bottom of the first row.
         """
         thin = Side(border_style="thin", color="000000")
-        thick = Side(border_style="thick", color="000000")
+        thick = Side(border_style="thick", color="000000")  # noqa: F841
 
         for ws in self.wb.worksheets:
             for row in ws.iter_rows():
@@ -104,7 +109,7 @@ class FormatExcel:
                             2 if ord(char) > 127 else 1 for char in str(cell.value)
                         )
                         max_length = max(max_length, cell_length)
-                    except:
+                    except Exception:
                         pass
                 # Adjust for header row
                 # header_cell = ws[f"{col_letter}1"]

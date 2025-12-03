@@ -1,7 +1,6 @@
-from anomalylab.config import *
+from dataclasses import dataclass
+
 from anomalylab.preprocess.preprocessor import Preprocessor
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
 
 
 @dataclass

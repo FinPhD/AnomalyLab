@@ -1,6 +1,13 @@
+import copy
+import warnings
+from dataclasses import dataclass
+from typing import Callable, Literal, Optional
+
+import pandas as pd
+from pandas import DataFrame
+
 from anomalylab.structure.data import Data
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
+from anomalylab.utils import Columns, columns_to_list, pp
 
 
 @dataclass
@@ -58,8 +65,6 @@ class PanelData(Data):
 
         This method identifies remaining columns as firm characteristics, excluding classifications.
         """
-        if self.is_copy:
-            self.df = copy.deepcopy(self.df)
         self.df[self.id] = self.df[self.id].astype(int)
         if not isinstance(self.df[self.time].dtype, pd.PeriodDtype):
             self.df[self.time] = pd.to_datetime(self.df[self.time], format="ISO8601")
@@ -116,6 +121,9 @@ class PanelData(Data):
             ValueError: If any required columns are missing from the DataFrame.
             ValueError: If there are no firm characteristics remaining after checking.
         """
+        if self.is_copy:
+            self.df = copy.deepcopy(self.df)
+
         # Check for duplicate column names
         duplicated_columns = self.df.columns[self.df.columns.duplicated()].tolist()
         if duplicated_columns:

@@ -1,1 +1,0 @@
-DECIMAL = 2

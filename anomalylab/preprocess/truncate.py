@@ -1,10 +1,8 @@
 from __future__ import annotations
 
+import numpy as np
 import numpy.ma as ma
 from scipy._lib._util import _contains_nan
-
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
 
 
 def truncate(
@@ -113,9 +111,7 @@ def truncate(
         shp = a.shape  # Store the shape of the array
         return _truncate1D(
             a.ravel(), lolim, uplim, loinc, upinc, contains_nan, nan_policy
-        ).reshape(
-            shp
-        )  # Truncate and reshape the array back to its original shape
+        ).reshape(shp)  # Truncate and reshape the array back to its original shape
     else:
         return ma.apply_along_axis(
             _truncate1D, axis, a, lolim, uplim, loinc, upinc, contains_nan, nan_policy

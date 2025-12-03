@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from importlib import resources
+from dataclasses import dataclass, field
+from importlib import resources  # noqa: F401
+from typing import Literal, Optional, Union
 
-from anomalylab.config import *
+import pandas as pd
+from pandas import DataFrame
+
 from anomalylab.empirical import (
     Correlation,
     FamaMacBethRegression,
@@ -12,8 +16,7 @@ from anomalylab.empirical import (
 )
 from anomalylab.preprocess import FillNa, Normalize, OutlierHandler, Shift
 from anomalylab.structure import PanelData, TimeSeries
-from anomalylab.utils import *
-from anomalylab.utils.imports import *
+from anomalylab.utils import Columns, Scalar, pp
 from anomalylab.visualization import FormatExcel
 
 
@@ -136,7 +139,7 @@ class Panel:
         group_columns: Columns = None,
         no_process_columns: Columns = None,
         process_all_characteristics: bool = True,
-        fillna_zero: bool = False,
+        fillna_zero_after_norm: bool = False,
     ) -> Panel:
         """
         Normalizes specified columns of the DataFrame using the chosen method.
@@ -157,7 +160,7 @@ class Panel:
                 normalization. Defaults to None.
             process_all_characteristics (bool, optional): Whether to process all
                 characteristics or not. Defaults to True.
-            fillna_zero (bool): If True, fills NaN values with zero after normalization.
+            fillna_zero_after_norm (bool): If True, fills NaN values with zero after normalization.
                 Defaults to False.
 
         Returns:
@@ -173,7 +176,7 @@ class Panel:
             group_columns=group_columns,
             no_process_columns=no_process_columns,
             process_all_characteristics=process_all_characteristics,
-            fillna_zero=fillna_zero,
+            fillna_zero_after_norm=fillna_zero_after_norm,
         ).panel_data
         return self
 
@@ -529,6 +532,7 @@ class Panel:
         decimal: Optional[int] = None,
         factor_return: bool = False,
         already_grouped: bool = False,
+        is_endog_return: bool = True,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -546,6 +550,7 @@ class Panel:
             factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
             already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
                 Defaults to False.
+            is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -559,6 +564,7 @@ class Panel:
             decimal=decimal,
             factor_return=factor_return,
             already_grouped=already_grouped,
+            is_endog_return=is_endog_return,
         )
 
     def bivariate_analysis(
@@ -577,6 +583,7 @@ class Panel:
         decimal: Optional[int] = None,
         factor_return: bool = False,
         already_grouped: bool = False,
+        is_endog_return: bool = True,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -598,6 +605,7 @@ class Panel:
             factor_return (bool): Whether to output factor returns in the analysis. Defaults to False.
             already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
                 Defaults to False.
+            is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -615,6 +623,7 @@ class Panel:
             decimal=decimal,
             factor_return=factor_return,
             already_grouped=already_grouped,
+            is_endog_return=is_endog_return,
         )
 
     def fm_reg(

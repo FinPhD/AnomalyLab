@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from anomalylab.structure import PanelData, TimeSeries
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
+from abc import ABC
+from dataclasses import dataclass
+
+from anomalylab.structure import PanelData
 
 
 @dataclass

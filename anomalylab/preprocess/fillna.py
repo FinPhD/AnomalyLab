@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import warnings
+from dataclasses import dataclass
+from typing import Literal, Optional, Union
+
+from pandas import DataFrame, Series
+
 from anomalylab.preprocess.preprocessor import Preprocessor
 from anomalylab.structure import PanelData
-from anomalylab.utils.imports import *
-from anomalylab.utils.utils import *
+from anomalylab.utils import Columns, Scalar, columns_to_list, pp
 
 
 @dataclass
@@ -68,7 +73,6 @@ class FillMethod:
 
 @dataclass
 class FillNa(Preprocessor):
-
     def fill(
         self,
         series: Series,
@@ -218,11 +222,11 @@ class FillNa(Preprocessor):
             warnings.warn(message=f"Missing values not found in {fill_columns}.")
         if self.panel_data.normalize:
             warnings.warn(
-                message=f"The data has already been normalized, and missing values have been filled with 0."
+                message="The data has already been normalized, and missing values have been filled with 0."
             )
         if self.panel_data.fillna:
             warnings.warn(
-                message=f"The missing values have already been handled earlier."
+                message="The missing values have already been handled earlier."
             )
 
 
