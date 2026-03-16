@@ -134,7 +134,7 @@ class FormatExcel:
             align (bool): Whether to apply text alignment. Default is True.
             line (bool): Whether to apply borders. Default is True.
             convert_brackets (bool): Whether to convert brackets. Default is False.
-            auto_adjust (bool): Whether to adjust column widths. Default is False.
+            adjust_col_widths (bool): Whether to adjust column widths. Default is False.
         """
         files_to_process = (
             glob(os.path.join(self.path, "*.xlsx"))
