@@ -96,9 +96,17 @@ class FamaMacBethRegression(Empirical):
                     )
 
                 def func(x):
-                    return np.average(
-                        x, weights=self.panel_data.df.loc[x.index, weight]
-                    )
+                    weights = self.panel_data.df.loc[x.index, weight]
+                    valid_mask = x.notna() & weights.notna()
+                    if not valid_mask.any():
+                        return np.nan
+
+                    valid_values = x.loc[valid_mask]
+                    valid_weights = weights.loc[valid_mask]
+                    if np.isclose(valid_weights.sum(), 0):
+                        return np.nan
+
+                    return float(np.average(valid_values, weights=valid_weights))
             else:
                 raise ValueError(
                     "industry_weighed_method must be one of ['value', 'equal']"
