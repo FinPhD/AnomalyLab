@@ -250,8 +250,8 @@ class PortfolioAnalysis(Empirical):
                     T = sub[self.time].nunique()
                     lag = math.ceil(4 * (T / 100) ** (4 / 25))
 
-                    Y = df[self.endog].values
-                    X = df[factors].values
+                    Y = sub[self.endog].values
+                    X = sub[factors].values
                     X = sm.add_constant(X)
                     reg = sm.OLS(Y, X).fit(
                         cov_type="HAC",
