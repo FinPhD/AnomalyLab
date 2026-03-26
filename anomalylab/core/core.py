@@ -533,6 +533,7 @@ class Panel:
         factor_return: bool = False,
         already_grouped: bool = False,
         is_endog_return: bool = True,
+        lag: Optional[int] = None,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -551,6 +552,7 @@ class Panel:
             already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
+            lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -565,6 +567,7 @@ class Panel:
             factor_return=factor_return,
             already_grouped=already_grouped,
             is_endog_return=is_endog_return,
+            lag=lag,
         )
 
     def bivariate_analysis(
@@ -584,6 +587,7 @@ class Panel:
         factor_return: bool = False,
         already_grouped: bool = False,
         is_endog_return: bool = True,
+        lag: Optional[int] = None,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -606,6 +610,7 @@ class Panel:
             already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
+            lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -624,6 +629,7 @@ class Panel:
             factor_return=factor_return,
             already_grouped=already_grouped,
             is_endog_return=is_endog_return,
+            lag=lag,
         )
 
     def fm_reg(
@@ -638,6 +644,7 @@ class Panel:
         industry_weighed_method: Literal["value", "equal"] = "value",
         is_winsorize: bool = False,
         is_normalize: bool = False,
+        lag: Optional[int] = None,
         decimal: Optional[int] = None,
         return_intermediate: bool = False,
     ) -> DataFrame:
@@ -658,6 +665,7 @@ class Panel:
             industry_weighed_method (Literal["value", "equal"]): Method for weighting industries.
             is_winsorize (bool): Indicates whether to apply winsorization.
             is_normalize (bool): Indicates whether to normalize exogenous variables.
+            lag (Optional[int]): HAC bandwidth. If None, uses the package default automatic rule.
             decimal (Optional[int]): Number of decimal places for rounding in output.
             return_intermediate (bool): If True, returns the intermediate results (e.g., coefficients for each time period).
 
@@ -675,6 +683,7 @@ class Panel:
             industry_weighed_method=industry_weighed_method,
             is_winsorize=is_winsorize,
             is_normalize=is_normalize,
+            lag=lag,
             decimal=decimal,
             return_intermediate=return_intermediate,
         )

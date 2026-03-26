@@ -1,4 +1,3 @@
-import math
 import warnings
 from dataclasses import dataclass
 from functools import partial
@@ -120,6 +119,7 @@ class FamaMacBethRegression(Empirical):
         df: DataFrame,
         reg: RegModel,
         is_normalize: bool,
+        lag: Optional[int] = None,
         return_intermediate: bool = False,
     ) -> RegResult:
         """Performs Fama-MacBeth regression on the provided DataFrame.
@@ -132,6 +132,7 @@ class FamaMacBethRegression(Empirical):
             df (DataFrame): DataFrame containing the data for regression.
             reg (RegModel): Model specification containing endogenous and exogenous variables.
             is_normalize (bool): Indicates whether to normalize the exogenous variables.
+            lag (Optional[int]): HAC bandwidth. If None, uses the package default automatic rule.
             return_intermediate (bool): If True, returns intermediate regression results
                 (e.g., coefficients, t-values, and R²) for each time period.
 
@@ -143,7 +144,7 @@ class FamaMacBethRegression(Empirical):
         df = df[[self.id, self.time] + exogenous + [dependent]].dropna()
         # Exclude time periods with only one observation
         df = df.groupby(self.time).filter(lambda x: len(x) > 1)
-        lag: int = math.ceil(4 * (df[self.time].nunique() / 100) ** (4 / 25))
+        bandwidth = self.default_hac_lag(T=df[self.time].nunique(), lag=lag)
         if is_normalize:
             df[exogenous] = df.groupby(self.time)[exogenous].transform(
                 func=lambda x: (x - x.mean()) / x.std()
@@ -173,7 +174,7 @@ class FamaMacBethRegression(Empirical):
             dependent=df[dependent],
             exog=sm.add_constant(df[exogenous]),
             check_rank=False,
-        ).fit(cov_type="kernel", debiased=False, bandwidth=lag)
+        ).fit(cov_type="kernel", debiased=False, bandwidth=bandwidth)
 
         return RegResult(
             params=fmb.params,
@@ -308,6 +309,7 @@ class FamaMacBethRegression(Empirical):
         industry_weighed_method: Literal["value", "equal"] = "value",
         is_winsorize: bool = False,
         is_normalize: bool = False,
+        lag: Optional[int] = None,
         decimal: Optional[int] = None,
         return_intermediate: bool = False,  # New parameter to control whether intermediate results are returned
     ) -> DataFrame:
@@ -328,6 +330,7 @@ class FamaMacBethRegression(Empirical):
             industry_weighed_method (Literal["value", "equal"]): Method for weighting industries.
             is_winsorize (bool): Indicates whether to apply winsorization.
             is_normalize (bool): Indicates whether to normalize exogenous variables.
+            lag (Optional[int]): HAC bandwidth. If None, uses the package default automatic rule.
             decimal (Optional[int]): Number of decimal places for rounding in output.
             return_intermediate (bool): If True, returns the intermediate results (e.g., coefficients for each time period).
 
@@ -353,6 +356,7 @@ class FamaMacBethRegression(Empirical):
                     df=self.panel_data.df,
                     reg=model,
                     is_normalize=is_normalize,
+                    lag=lag,
                     return_intermediate=True,
                 )
                 for model in reg_models.models
@@ -368,6 +372,7 @@ class FamaMacBethRegression(Empirical):
                             df=self.panel_data.df,
                             reg=model,
                             is_normalize=is_normalize,
+                            lag=lag,
                             return_intermediate=False,
                         ),
                         decimal=decimal or self.decimal,
