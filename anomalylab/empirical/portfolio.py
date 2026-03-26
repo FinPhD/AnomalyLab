@@ -1,4 +1,3 @@
-import math
 import warnings
 from dataclasses import dataclass
 from typing import Literal, Optional, Union
@@ -164,7 +163,11 @@ class PortfolioAnalysis(Empirical):
             return out_df
 
     def _claculate_value(
-        self, df: DataFrame, decimal: Optional[int] = None, is_endog_return: bool = True
+        self,
+        df: DataFrame,
+        decimal: Optional[int] = None,
+        is_endog_return: bool = True,
+        lag: Optional[int] = None,
     ) -> dict:
         """Calculate various portfolio performance metrics.
 
@@ -174,21 +177,27 @@ class PortfolioAnalysis(Empirical):
             df (DataFrame): The DataFrame containing the relevant data for calculations.
             decimal (Optional[int]): The number of decimal places for formatting. Defaults to None.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
+            lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
 
         Returns:
             dict: A dictionary containing computed metrics.
         """
-        stat_dict = self._calculate_mean_and_t_value(df, is_endog_return)
+        stat_dict = self._calculate_mean_and_t_value(
+            df, is_endog_return=is_endog_return, lag=lag
+        )
 
         if is_endog_return:
-            factors_dict = self._calculate_alpha_and_t_value(df)
+            factors_dict = self._calculate_alpha_and_t_value(df, lag=lag)
             sharpe_dict = self._calculate_sharpe(df, decimal)
             return {**stat_dict, **factors_dict, **sharpe_dict}
 
         return stat_dict
 
     def _calculate_mean_and_t_value(
-        self, df: DataFrame, is_endog_return: bool = True
+        self,
+        df: DataFrame,
+        is_endog_return: bool = True,
+        lag: Optional[int] = None,
     ) -> dict:
         """Calculate mean and t-value for the dependent variable.
 
@@ -198,18 +207,19 @@ class PortfolioAnalysis(Empirical):
         Args:
             df (DataFrame): The DataFrame containing the relevant data for calculations.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
+            lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
 
         Returns:
             dict: A dictionary with mean, t-value, and p-value.
         """
         stat_dict = {}
         T = df[self.time].nunique()
-        lag = math.ceil(4 * (T / 100) ** (4 / 25))
+        hac_lag = self.default_hac_lag(T=T, lag=lag)
 
         Y = df[self.endog].values
         X = DataFrame({"constant": [1] * len(df[self.endog])}).values
         reg = sm.OLS(Y, X).fit(
-            cov_type="HAC", cov_kwds={"maxlags": lag, "use_correction": False}
+            cov_type="HAC", cov_kwds={"maxlags": hac_lag, "use_correction": False}
         )
 
         mean_value = reg.params[0]
@@ -223,7 +233,9 @@ class PortfolioAnalysis(Empirical):
 
         return stat_dict
 
-    def _calculate_alpha_and_t_value(self, df: DataFrame) -> dict:
+    def _calculate_alpha_and_t_value(
+        self, df: DataFrame, lag: Optional[int] = None
+    ) -> dict:
         """Calculate alpha and t-value for specified models.
 
         This method computes alpha values and their t-statistics for various regression models
@@ -231,6 +243,7 @@ class PortfolioAnalysis(Empirical):
 
         Args:
             df (DataFrame): The DataFrame containing the relevant data for calculations.
+            lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
 
         Returns:
             dict: A dictionary containing alpha values, t-values, and p-values for each model.
@@ -248,14 +261,14 @@ class PortfolioAnalysis(Empirical):
                 for model, factors in self.models.items():
                     sub = df.dropna(subset=[self.time, self.endog] + factors)
                     T = sub[self.time].nunique()
-                    lag = math.ceil(4 * (T / 100) ** (4 / 25))
+                    hac_lag = self.default_hac_lag(T=T, lag=lag)
 
                     Y = sub[self.endog].values
                     X = sub[factors].values
                     X = sm.add_constant(X)
                     reg = sm.OLS(Y, X).fit(
                         cov_type="HAC",
-                        cov_kwds={"maxlags": lag, "use_correction": False},
+                        cov_kwds={"maxlags": hac_lag, "use_correction": False},
                     )
 
                     alpha_value = reg.params[0]
@@ -303,6 +316,7 @@ class PortfolioAnalysis(Empirical):
         factor_return: bool = False,
         already_grouped: bool = False,
         is_endog_return: bool = True,
+        lag: Optional[int] = None,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -319,6 +333,7 @@ class PortfolioAnalysis(Empirical):
             already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
+            lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -420,7 +435,10 @@ class PortfolioAnalysis(Empirical):
 
             for key, sr in time_series_dict.items():
                 results[key] = self._claculate_value(
-                    sr, decimal=decimal, is_endog_return=is_endog_return
+                    sr,
+                    decimal=decimal,
+                    is_endog_return=is_endog_return,
+                    lag=lag,
                 )
 
             key_name = "Return" if is_endog_return else self.endog
@@ -482,6 +500,7 @@ class PortfolioAnalysis(Empirical):
         factor_return: bool = False,
         already_grouped: bool = False,
         is_endog_return: bool = True,
+        lag: Optional[int] = None,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -502,6 +521,7 @@ class PortfolioAnalysis(Empirical):
             already_grouped (bool): If True, skips the grouping step assuming data has been pre-grouped.
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
+            lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -655,7 +675,10 @@ class PortfolioAnalysis(Empirical):
 
             for key, series in time_series_dict.items():
                 value_dict = self._claculate_value(
-                    series, decimal=decimal, is_endog_return=is_endog_return
+                    series,
+                    decimal=decimal,
+                    is_endog_return=is_endog_return,
+                    lag=lag,
                 )
                 results[key] = value_dict
 
