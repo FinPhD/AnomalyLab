@@ -75,6 +75,8 @@ class PortfolioAnalysis(Empirical):
         vars: Union[str, list[str]],
         groups: Union[int, list[int]],
         sort_type: Literal["independent", "dependent"] = "independent",
+        tie_break: Literal["error", "random"] = "error",
+        random_state: Optional[int] = None,
         inplace: bool = False,
     ) -> Optional[DataFrame]:
         """Group variables into portfolios based on specified groups.
@@ -87,6 +89,10 @@ class PortfolioAnalysis(Empirical):
             sort_type (Literal["independent", "dependent"]): Type of sorting, either 'independent'
                 (group within time period) or 'dependent' (group based on previous variable).
                 Defaults to "independent".
+            tie_break (Literal["error", "random"]): How to handle ties when ``qcut``
+                cannot form the requested groups. ``"error"`` raises the original error;
+                ``"random"`` breaks ties randomly within the affected group and retries.
+            random_state (Optional[int]): Seed used when ``tie_break="random"``.
             inplace (bool): If True, modifies the original dataset and returns None. Defaults to False.
 
         Returns:
@@ -100,7 +106,34 @@ class PortfolioAnalysis(Empirical):
         if isinstance(groups, int):
             groups = [groups]
 
+        if tie_break not in {"error", "random"}:
+            raise ValueError("tie_break must be one of ['error', 'random']")
+
         groups_adj = [[0, 0.3, 0.7, 1] if g == 3 else g for g in groups]
+        rng = np.random.default_rng(random_state)
+        fallback_warned_vars: set[str] = set()
+
+        def _random_tie_rank(x: Series) -> Series:
+            shuffled_index = rng.permutation(x.index.to_numpy())
+            shuffled = x.loc[shuffled_index]
+            return shuffled.rank(method="first").reindex(x.index)
+
+        def _qcut_with_tie_break(x: Series, q, labels, var_name: str):
+            try:
+                return pd.qcut(x, q=q, labels=labels)
+            except ValueError:
+                if tie_break == "error":
+                    raise
+                if var_name not in fallback_warned_vars:
+                    warnings.warn(
+                        f"qcut failed for '{var_name}' due to ties; "
+                        "falling back to random tie-breaking with "
+                        f"random_state={random_state}.",
+                        stacklevel=2,
+                    )
+                    fallback_warned_vars.add(var_name)
+                ranked = _random_tie_rank(x)
+                return pd.qcut(ranked, q=q, labels=labels)
 
         # Track original data length for missing value reporting
         original_length = len(self.panel_data.df)
@@ -125,10 +158,11 @@ class PortfolioAnalysis(Empirical):
                 out_df[f"{var}_g{groups[i]}"] = (
                     out_df.groupby(group_col, observed=False)[var]
                     .apply(
-                        lambda x: pd.qcut(
-                            x,
+                        lambda x: _qcut_with_tie_break(
+                            x=x,
                             q=groups_adj[i],
                             labels=[j for j in range(1, groups[i] + 1)],
+                            var_name=var,
                         )
                     )
                     .reset_index()
@@ -140,10 +174,11 @@ class PortfolioAnalysis(Empirical):
                 out_df[f"{var}_g{groups[i]}"] = (
                     out_df.groupby(self.time)[var]
                     .apply(
-                        lambda x: pd.qcut(
-                            x,
+                        lambda x: _qcut_with_tie_break(
+                            x=x,
                             q=groups_adj[i],
                             labels=[j for j in range(1, groups[i] + 1)],
+                            var_name=var,
                         )
                     )
                     .reset_index()
@@ -317,6 +352,8 @@ class PortfolioAnalysis(Empirical):
         already_grouped: bool = False,
         is_endog_return: bool = True,
         lag: Optional[int] = None,
+        tie_break: Literal["error", "random"] = "error",
+        random_state: Optional[int] = None,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -334,13 +371,21 @@ class PortfolioAnalysis(Empirical):
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
             lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
+            tie_break (Literal["error", "random"]): How to handle ties when portfolio
+                formation fails in ``qcut``.
+            random_state (Optional[int]): Seed used when ``tie_break="random"``.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
         """
 
         if not already_grouped:
-            data_d = self.GroupN(core_var, core_g)
+            data_d = self.GroupN(
+                core_var,
+                core_g,
+                tie_break=tie_break,
+                random_state=random_state,
+            )
         else:
             expected_col = f"{core_var}_g{core_g}"
             if expected_col not in self.panel_data.df.columns:
@@ -501,6 +546,8 @@ class PortfolioAnalysis(Empirical):
         already_grouped: bool = False,
         is_endog_return: bool = True,
         lag: Optional[int] = None,
+        tie_break: Literal["error", "random"] = "error",
+        random_state: Optional[int] = None,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -522,6 +569,9 @@ class PortfolioAnalysis(Empirical):
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
             lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
+            tie_break (Literal["error", "random"]): How to handle ties when portfolio
+                formation fails in ``qcut``.
+            random_state (Optional[int]): Seed used when ``tie_break="random"``.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -532,6 +582,8 @@ class PortfolioAnalysis(Empirical):
                 [sort_var, core_var],
                 [sort_g, core_g],
                 sort_type=sort_type,
+                tie_break=tie_break,
+                random_state=random_state,
             )
         else:
             # Check existence of both pre-grouped columns when using existing groups
