@@ -488,7 +488,7 @@ class Panel:
         groups: Union[int, list[int]],
         sort_type: Literal["independent", "dependent"] = "independent",
         tie_break: Literal["error", "random"] = "error",
-        random_state: Optional[int] = None,
+        random_state: Optional[int] = 42,
         inplace: bool = False,
     ) -> Optional[pd.DataFrame]:
         """Group variables into portfolios based on specified groups.
@@ -504,6 +504,7 @@ class Panel:
             tie_break (Literal["error", "random"]): How to handle ties when ``qcut``
                 cannot form the requested groups.
             random_state (Optional[int]): Seed used when ``tie_break="random"``.
+                Defaults to 42.
             inplace (bool): If True, modifies the original dataset and returns None. Defaults to False.
 
         Returns:
@@ -544,7 +545,7 @@ class Panel:
         is_endog_return: bool = True,
         lag: Optional[int] = None,
         tie_break: Literal["error", "random"] = "error",
-        random_state: Optional[int] = None,
+        random_state: Optional[int] = 42,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -567,6 +568,7 @@ class Panel:
             tie_break (Literal["error", "random"]): How to handle ties when portfolio
                 formation fails in ``qcut``.
             random_state (Optional[int]): Seed used when ``tie_break="random"``.
+                Defaults to 42.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -605,7 +607,7 @@ class Panel:
         is_endog_return: bool = True,
         lag: Optional[int] = None,
         tie_break: Literal["error", "random"] = "error",
-        random_state: Optional[int] = None,
+        random_state: Optional[int] = 42,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -632,6 +634,7 @@ class Panel:
             tie_break (Literal["error", "random"]): How to handle ties when portfolio
                 formation fails in ``qcut``.
             random_state (Optional[int]): Seed used when ``tie_break="random"``.
+                Defaults to 42.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
