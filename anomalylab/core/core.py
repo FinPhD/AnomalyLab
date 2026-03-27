@@ -487,6 +487,8 @@ class Panel:
         vars: Union[str, list[str]],
         groups: Union[int, list[int]],
         sort_type: Literal["independent", "dependent"] = "independent",
+        tie_break: Literal["error", "random"] = "error",
+        random_state: Optional[int] = 42,
         inplace: bool = False,
     ) -> Optional[pd.DataFrame]:
         """Group variables into portfolios based on specified groups.
@@ -499,6 +501,10 @@ class Panel:
             sort_type (Literal["independent", "dependent"]): Type of sorting, either 'independent'
                 (group within time period) or 'dependent' (group based on previous variable).
                 Defaults to "independent".
+            tie_break (Literal["error", "random"]): How to handle ties when ``qcut``
+                cannot form the requested groups.
+            random_state (Optional[int]): Seed used when ``tie_break="random"``.
+                Defaults to 42.
             inplace (bool): If True, modifies the original dataset and returns None. Defaults to False.
 
         Returns:
@@ -512,12 +518,16 @@ class Panel:
                 vars=vars,
                 groups=groups,
                 sort_type=sort_type,
+                tie_break=tie_break,
+                random_state=random_state,
             )
         else:
             return self.portfolio_analysis_processor(endog=endog, weight=weight).GroupN(
                 vars=vars,
                 groups=groups,
                 sort_type=sort_type,
+                tie_break=tie_break,
+                random_state=random_state,
             )
 
     def univariate_analysis(
@@ -534,6 +544,8 @@ class Panel:
         already_grouped: bool = False,
         is_endog_return: bool = True,
         lag: Optional[int] = None,
+        tie_break: Literal["error", "random"] = "error",
+        random_state: Optional[int] = 42,
     ) -> tuple:
         """Perform univariate analysis on the specified core variable.
 
@@ -553,6 +565,10 @@ class Panel:
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
             lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
+            tie_break (Literal["error", "random"]): How to handle ties when portfolio
+                formation fails in ``qcut``.
+            random_state (Optional[int]): Seed used when ``tie_break="random"``.
+                Defaults to 42.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -568,6 +584,8 @@ class Panel:
             already_grouped=already_grouped,
             is_endog_return=is_endog_return,
             lag=lag,
+            tie_break=tie_break,
+            random_state=random_state,
         )
 
     def bivariate_analysis(
@@ -588,6 +606,8 @@ class Panel:
         already_grouped: bool = False,
         is_endog_return: bool = True,
         lag: Optional[int] = None,
+        tie_break: Literal["error", "random"] = "error",
+        random_state: Optional[int] = 42,
     ) -> tuple:
         """Perform bivariate analysis on two specified variables.
 
@@ -611,6 +631,10 @@ class Panel:
                 Defaults to False.
             is_endog_return (bool): Whether the dependent variable is a return. Defaults to True.
             lag (Optional[int]): HAC lag length. If None, uses the package default automatic rule.
+            tie_break (Literal["error", "random"]): How to handle ties when portfolio
+                formation fails in ``qcut``.
+            random_state (Optional[int]): Seed used when ``tie_break="random"``.
+                Defaults to 42.
 
         Returns:
             tuple: A tuple containing the equal-weighted and value-weighted results DataFrames.
@@ -630,6 +654,8 @@ class Panel:
             already_grouped=already_grouped,
             is_endog_return=is_endog_return,
             lag=lag,
+            tie_break=tie_break,
+            random_state=random_state,
         )
 
     def fm_reg(
